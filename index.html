@@ -413,22 +413,74 @@ const TYPES = {
     qty: areaQty, measure: areaMeasure,
     basic: ["Pressure-treated 2×", "Corner bracing", "Landscape-fabric liner", "Filled with garden soil"],
     up: ["Cedar boards — rot-resistant", "Mitered cap rail to sit on", "Built-in trellis", "Drip-irrigation ready"]
+  },
+
+  /* ---------- CABINETRY & CUSTOM ---------- */
+  cabinets: {
+    name: "Kitchen Cabinets", cat: "Cabinetry & Custom", unit: "linear ft", rate: 350, upMult: 1.7,
+    defL: 12, defW: 2, defH: 3, labels: { L: "Run length", W: null, H: null },
+    qty: s => Math.max(s.L, 3), measure: s => `${s.L} linear ft of cabinets`,
+    basic: ["Painted MDF shaker doors", "Laminate countertop", "Base + upper cabinets", "Bar-pull hardware"],
+    up: ["Solid-wood stained doors", "Quartz countertop", "Soft-close doors & drawers", "Crown molding + under-cabinet lights"]
+  },
+  builtin: {
+    name: "Built-in Shelving", cat: "Cabinetry & Custom", unit: "linear ft", rate: 400, upMult: 1.6,
+    defL: 8, defW: 1, defH: 8, labels: { L: "Width", W: "Depth", H: "Height" },
+    qty: s => Math.max(s.L, 3), measure: s => `${s.L}' W × ${s.H}' H`,
+    basic: ["Paint-grade frame & shelves", "Adjustable shelving", "Base cabinet storage", "Scribed to walls"],
+    up: ["Stain-grade hardwood", "Glass-door upper sections", "Integrated LED lighting", "Crown & light valance"]
+  },
+  armoire: {
+    name: "Armoire / Wardrobe", cat: "Cabinetry & Custom", unit: "sq ft", rate: 120, upMult: 1.6,
+    defL: 4, defW: 2, defH: 7, labels: { L: "Width", W: "Depth", H: "Height" },
+    qty: s => Math.max(s.L, 2) * Math.max(s.H, 4), measure: s => `${s.L}' W × ${s.H}' H`,
+    basic: ["Paint-grade carcass", "Flat-panel doors", "Hanging rod + shelf", "Standard hinges"],
+    up: ["Solid-wood, stained & sealed", "Raised-panel doors", "Interior mirror + drawers", "Decorative crown & feet"]
+  },
+  desk: {
+    name: "Custom Desk", cat: "Cabinetry & Custom", unit: "sq ft", rate: 180, upMult: 1.55,
+    defL: 5, defW: 2.5, defH: 2.5, labels: { L: "Width", W: "Depth", H: "Height" },
+    qty: s => Math.max(s.L, 3) * Math.max(s.W, 1.8), measure: s => `${s.L}' × ${s.W}' desk`,
+    basic: ["Butcher-block or PT top", "Painted pedestal drawers", "Cable pass-through", "Wood legs"],
+    up: ["Solid hardwood / live-edge top", "Powder-coated steel legs", "Soft-close drawer bank", "Wire management + grommets"]
+  },
+  vanity: {
+    name: "Bathroom Vanity", cat: "Cabinetry & Custom", unit: "linear ft", rate: 450, upMult: 1.6,
+    defL: 4, defW: 1.8, defH: 3, labels: { L: "Width", W: "Depth", H: null },
+    qty: s => Math.max(s.L, 2), measure: s => `${s.L}' vanity`,
+    basic: ["Painted base cabinet", "Cultured-marble top + sink", "Framed mirror", "Standard faucet rough-in"],
+    up: ["Stained solid-wood base", "Quartz top + undermount sinks", "Double bowl (if wide enough)", "Sconce lighting + soft-close"]
+  },
+  workbench: {
+    name: "Workbench", cat: "Cabinetry & Custom", unit: "sq ft", rate: 90, upMult: 1.5,
+    defL: 6, defW: 2.5, defH: 3, labels: { L: "Length", W: "Depth", H: "Height" },
+    qty: s => Math.max(s.L, 3) * Math.max(s.W, 2), measure: s => `${s.L}' × ${s.W}' bench`,
+    basic: ["PT frame & top", "Lower storage shelf", "Bolted joinery", "Pegboard back"],
+    up: ["Hardwood top + bench vise", "Drawer bank", "Pegboard w/ tool layout", "Locking casters + power strip"]
+  },
+  custom: {
+    name: "Custom Build", cat: "Cabinetry & Custom", unit: "sq ft", rate: 150, upMult: 1.6,
+    defL: 4, defW: 2, defH: 4, labels: { L: "Width", W: "Depth", H: "Height" },
+    qty: s => Math.max(s.L, 2) * Math.max(s.W, 1), measure: s => `${s.L}' × ${s.W}' × ${s.H}' custom`,
+    basic: ["Built to your measurements", "Paint-grade materials", "Doors + open shelving", "Standard hardware"],
+    up: ["Stain-grade hardwood", "Integrated lighting", "Soft-close doors & drawers", "Custom finish to match space"]
   }
 };
 
 /* Category display order + labels for the picker */
-const CATS = ["Structures", "Outdoor Living", "Groundwork", "Small Projects"];
+const CATS = ["Structures", "Outdoor Living", "Groundwork", "Small Projects", "Cabinetry & Custom"];
 const TYPE_ICONS = {
   addition: "🧱", sunroom: "🌇", garage: "🚗", barn: "🚜", shed: "🏠",
   deck: "🪵", porch: "🏡", patio: "⛱️", pergola: "🏛️", gazebo: "🎪", carport: "🚙",
   driveway: "🛣️", walkway: "🚶", retainingwall: "🪨", fence: "🚧",
-  stairs: "🪜", ramp: "♿", planter: "🌱"
+  stairs: "🪜", ramp: "♿", planter: "🌱",
+  cabinets: "🗄️", builtin: "📚", armoire: "🚪", desk: "🪑", vanity: "🚰", workbench: "🔧", custom: "🛠️"
 };
 
 /* Features detected from the description. cost = [standard adder, upgraded adder] */
 const FEATURES = {
   stairs:   { re: /\bstair|\bsteps?\b/i,            label: "Stairs",          cost: [900, 1400],  types: ["deck","porch"] },
-  lighting: { re: /\blight|\bled\b/i,               label: "Lighting",        cost: [450, 950],   types: ["deck","patio","garage","shed","fence","addition","porch","pergola","gazebo","carport","sunroom","barn","driveway","walkway","stairs","ramp","retainingwall","planter"] },
+  lighting: { re: /\blight|\bled\b|under.?cabinet/i, label: "Lighting",       cost: [450, 950],   types: ["deck","patio","garage","shed","fence","addition","porch","pergola","gazebo","carport","sunroom","barn","driveway","walkway","stairs","ramp","retainingwall","planter","cabinets","builtin","vanity","custom","workbench"] },
   pergola:  { re: /pergola|shade structure/i,       label: "Pergola",         cost: [2600, 4200], types: ["deck","patio","porch"] },
   firepit:  { re: /fire\s?pit/i,                    label: "Fire pit",        cost: [1800, 2600], types: ["patio","gazebo"] },
   gate:     { re: /\bgate/i,                        label: "Gate",            cost: [350, 600],   types: ["fence"] },
@@ -1453,6 +1505,198 @@ function buildPlanter(tier) {
   return { focusY: bedH + 1, size: Math.max(L, W) + 7 };
 }
 
+/* ============================================================
+   BUILDERS — cabinetry, furniture & custom (indoor vignette)
+   ============================================================ */
+
+/* Simple showroom set: wood floor + two walls so indoor pieces read as indoors */
+function interior(w, d, h) {
+  box(w, 0.2, d, mat(0xcaa876, 0.85), 0, 0.1, 0);          // wood floor
+  box(w, h, 0.3, mat(0xe8e2d6, 0.95), 0, h/2, -d/2);       // back wall
+  box(0.3, h, d, mat(0xe0dacd, 0.95), -w/2, h/2, 0);       // side wall
+}
+const BOOKCOLORS = [0x8a4b3a, 0x35566a, 0x6a6a3a, 0x7a5638, 0x3f6a5a, 0x8a7a4a, 0x5a3f6a];
+function books(cx, y, z, width) {
+  let x = cx - width/2 + 0.1;
+  while (x < cx + width/2 - 0.15) {
+    const bw = 0.11 + Math.random() * 0.08, bh = 0.6 + Math.random() * 0.35;
+    box(bw, bh, 0.5, mat(BOOKCOLORS[Math.floor(Math.random() * BOOKCOLORS.length)], 0.8), x + bw/2, y + bh/2, z);
+    x += bw + 0.02;
+  }
+}
+function handle(x, y, z, up) { box(0.1, 0.35, 0.09, mat(up ? 0xc9a24a : 0x2a2d33, 0.4, 0.7), x, y, z); }
+
+function buildCabinets(tier) {
+  const { L, feats } = state;
+  const up = tier === "up";
+  const run = Math.max(L, 3);
+  const baseH = 3, baseD = 2, topT = 0.15, upH = 2.5, upD = 1, upStart = 4.5, upZ = -baseD/2 + upD/2;
+  interior(run + 6, baseD + 6, upStart + upH + 2);
+  const carc = up ? mat(0x6b4a2f) : mat(0xe9e5db);
+  const door = up ? mat(0x7a5638) : mat(0xf3f0ea);
+  const topMat = up ? mat(0xdedbd6, 0.3, 0.1) : mat(0x9a9790, 0.5);
+  box(run, 0.4, baseD - 0.3, mat(0x2e2e2e), 0, 0.2, 0.15);                     // toe kick
+  box(run, baseH - 0.4, baseD, carc, 0, 0.4 + (baseH - 0.4)/2, 0);            // base carcass
+  box(run + 0.2, topT, baseD + 0.2, topMat, 0, baseH + topT/2, 0.1);          // countertop
+  const nBase = Math.max(1, Math.round(run / 1.6));
+  for (let i = 0; i < nBase; i++) {
+    const dw = run/nBase, cx = -run/2 + (i + 0.5) * dw;
+    box(dw - 0.1, baseH - 0.7, 0.08, door, cx, 0.4 + (baseH - 0.4)/2, baseD/2 + 0.02);
+    handle(cx + dw/2 - 0.22, 0.4 + (baseH - 0.4)/2 + (baseH - 0.4)/3.2, baseD/2 + 0.06, up);
+  }
+  box(run, upH, upD, carc, 0, upStart + upH/2, upZ);                          // upper carcass
+  const nUp = Math.max(1, Math.round(run / 1.6));
+  for (let i = 0; i < nUp; i++) {
+    const dw = run/nUp, cx = -run/2 + (i + 0.5) * dw;
+    box(dw - 0.1, upH - 0.2, 0.08, door, cx, upStart + upH/2, upZ + upD/2 + 0.02);
+    handle(cx + dw/2 - 0.22, upStart + 0.5, upZ + upD/2 + 0.06, up);
+  }
+  if (up) box(run + 0.3, 0.3, upD + 0.2, carc, 0, upStart + upH + 0.15, upZ);  // crown
+  if (up || feats.lighting) box(run - 0.4, 0.08, 0.1, PAL.light(), 0, upStart - 0.05, upZ + upD/2 - 0.05);
+  box(1.6, 0.05, 1.1, mat(0x8a8f96, 0.3, 0.5), -run * 0.15, baseH + topT + 0.01, 0.1);  // sink
+  cyl(0.06, 0.06, 0.7, mat(0xcfd2d6, 0.3, 0.7), -run * 0.15, baseH + topT + 0.35, -0.2); // faucet
+  scaleFigure(run/2 + 3, 3);
+  label(`${state.L}' of cabinets`, 0, baseH + topT + 0.7, baseD/2 + 2.5);
+  return { focusY: (upStart + upH)/2, size: Math.max(run, upStart + upH) + 7 };
+}
+
+function buildBuiltin(tier) {
+  const { L, W, H, feats } = state;
+  const up = tier === "up";
+  const w = Math.max(L, 3), d = Math.max(W, 0.8), h = Math.max(H, 4);
+  interior(w + 6, d + 5, h + 2);
+  const wood = up ? mat(0x6b4a2f) : mat(0xe9e5db);
+  box(w, h, 0.15, wood, 0, h/2, -d/2);                                        // back
+  box(0.2, h, d, wood, -w/2, h/2, 0); box(0.2, h, d, wood, w/2, h/2, 0);      // sides
+  box(w, 0.2, d, wood, 0, h - 0.1, 0); box(w, 0.5, d, wood, 0, 0.25, 0);      // top + base
+  const bays = Math.max(1, Math.round(w / 2.5)), bayW = w/bays;
+  for (let i = 1; i < bays; i++) box(0.15, h, d, wood, -w/2 + i * bayW, h/2, 0);
+  const shelves = Math.max(3, Math.round(h / 1.3));
+  for (let i = 1; i < shelves; i++) box(w - 0.3, 0.12, d - 0.15, wood, 0, i * (h/shelves), 0);
+  for (let i = 0; i < bays; i++) box(bayW - 0.25, 1.8, 0.08, up ? mat(0x7a5638) : mat(0xf3f0ea), -w/2 + (i + 0.5) * bayW, 1.15, d/2 - 0.05);  // lower doors
+  for (let s = 2; s < shelves - 1; s++) for (let i = 0; i < bays; i++) {
+    if (Math.random() < 0.35) continue;
+    books(-w/2 + (i + 0.5) * bayW, s * (h/shelves) + 0.05, 0, bayW - 0.6);
+  }
+  if (up || feats.lighting) for (let s = 2; s < shelves; s++) box(w - 0.4, 0.05, 0.05, PAL.light(), 0, s * (h/shelves) - 0.08, d/2 - 0.2);
+  scaleFigure(w/2 + 3, d/2 + 2);
+  label(`${state.L}' W × ${state.H}' H`, 0, h + 0.6, d/2 + 2.5);
+  return { focusY: h/2, size: Math.max(w, h) + 7 };
+}
+
+function buildArmoire(tier) {
+  const { L, W, H } = state;
+  const up = tier === "up";
+  const w = Math.max(L, 2.5), d = Math.max(W, 1.2), h = Math.max(H, 5);
+  interior(w + 6, d + 5, h + 2);
+  const body = up ? mat(0x5a3d28) : mat(0x8a6a4a);
+  const doorMat = up ? mat(0x6b4a2f) : mat(0x7a5638);
+  const legH = up ? 0.6 : 0.35;
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) box(0.25, legH, 0.25, body, sx * (w/2 - 0.2), legH/2, sz * (d/2 - 0.2));
+  box(w, h - legH, d, body, 0, legH + (h - legH)/2, 0);
+  for (const sx of [-1, 1]) {
+    box(w/2 - 0.15, h - legH - 0.6, 0.08, doorMat, sx * w/4, legH + (h - legH)/2, d/2 + 0.01);
+    if (up) box(w/2 - 0.55, h - legH - 1.3, 0.05, body, sx * w/4, legH + (h - legH)/2, d/2 + 0.05);   // raised panel
+    handle(sx * 0.25, legH + (h - legH)/2, d/2 + 0.06, up);
+  }
+  box(w + 0.3, 0.35, d + 0.3, body, 0, h + 0.05, 0);                          // crown
+  if (up) box(w + 0.55, 0.2, d + 0.55, body, 0, h + 0.25, 0);
+  scaleFigure(w/2 + 3, 3);
+  label(`${state.L}' W × ${state.H}' H`, 0, h + 0.7, d/2 + 2.5);
+  return { focusY: h/2, size: Math.max(w, h) + 7 };
+}
+
+function buildDesk(tier) {
+  const { L, W, H } = state;
+  const up = tier === "up";
+  const w = Math.max(L, 3), d = Math.max(W, 1.8), h = Math.max(H, 2.3), topT = up ? 0.3 : 0.18;
+  interior(w + 6, d + 6, h + 4);
+  const topMat = up ? mat(0x6b4a2f) : mat(0x9a7550);
+  const legMat = up ? mat(0x2a2d33, 0.4, 0.7) : mat(0x8a6a4a);
+  box(w, topT, d, topMat, 0, h, 0);
+  const pedX = w/2 - w * 0.16 - 0.1;
+  box(w * 0.32, h - topT, d - 0.2, up ? mat(0x5a3d28) : mat(0x8a6a4a), pedX, (h - topT)/2, 0);   // drawer pedestal
+  for (let i = 0; i < 3; i++) handle(pedX, 0.6 + i * 0.6, d/2 - 0.05, up);
+  if (up) { for (const sz of [-1, 1]) box(0.12, h - topT, 0.12, legMat, -w/2 + 0.4, (h - topT)/2, sz * (d/2 - 0.3)); box(0.12, 0.12, d - 0.4, legMat, -w/2 + 0.4, h - topT - 0.15, 0); }
+  else { for (const sz of [-1, 1]) box(0.2, h - topT, 0.2, legMat, -w/2 + 0.3, (h - topT)/2, sz * (d/2 - 0.25)); box(0.2, 0.4, d - 0.4, legMat, -w/2 + 0.3, h - topT - 0.3, 0); }
+  box(1.5, 0.12, 1.5, mat(0x3a3d42, 0.6), 0, 1.5, d/2 + 1.4);                 // chair seat
+  box(1.5, 1.4, 0.12, mat(0x3a3d42, 0.6), 0, 2.2, d/2 + 2.05);               // chair back
+  scaleFigure(w/2 + 3, d/2 + 1);
+  label(`${state.L}' × ${state.W}' desk`, 0, h + 0.8, d/2 + 2.5);
+  return { focusY: h, size: Math.max(w, d) + 7 };
+}
+
+function buildVanity(tier) {
+  const { L, W, feats } = state;
+  const up = tier === "up";
+  const w = Math.max(L, 2), d = Math.max(W, 1.6), h = 3;
+  interior(w + 6, d + 5, 8);
+  const carc = up ? mat(0x5a3d28) : mat(0xe9e5db);
+  const topMat = up ? mat(0xdedbd6, 0.3, 0.1) : mat(0x9a9790, 0.5);
+  box(w, 0.4, d - 0.3, mat(0x2e2e2e), 0, 0.2, 0.15);
+  box(w, h - 0.4, d, carc, 0, 0.4 + (h - 0.4)/2, 0);
+  box(w + 0.2, 0.18, d + 0.2, topMat, 0, h + 0.09, 0);
+  const nSink = up && w > 4 ? 2 : 1;
+  for (let i = 0; i < nSink; i++) {
+    const cx = nSink > 1 ? (i ? w/4 : -w/4) : 0;
+    box(1.4, 0.06, 1.0, mat(0xf3f3f1, 0.2), cx, h + 0.17, 0.05);
+    cyl(0.06, 0.06, 0.55, mat(0xcfd2d6, 0.3, 0.7), cx, h + 0.4, -d/4);
+  }
+  const nD = Math.max(2, Math.round(w / 1.5));
+  for (let i = 0; i < nD; i++) { const dw = w/nD, cx = -w/2 + (i + 0.5) * dw; box(dw - 0.1, h - 1, 0.08, up ? mat(0x6b4a2f) : mat(0xf3f0ea), cx, 0.4 + (h - 0.4)/2 - 0.1, d/2 + 0.02); handle(cx, h - 0.9, d/2 + 0.06, up); }
+  box(w - 0.4, 2.2, 0.08, PAL.glass(), 0, h + 1.7, -d/2 + 0.16);             // mirror
+  if (up) box(w - 0.1, 2.5, 0.06, mat(0x6b4a2f), 0, h + 1.7, -d/2 + 0.1);    // mirror frame
+  if (up || feats.lighting) for (const sx of (nSink > 1 ? [-1, 1] : [0])) box(0.25, 0.25, 0.25, PAL.light(), sx * w/4, h + 3.0, -d/2 + 0.35);
+  scaleFigure(w/2 + 3, 3);
+  label(`${state.L}' vanity`, 0, h + 0.6, d/2 + 2.5);
+  return { focusY: h, size: Math.max(w, h + 2) + 6 };
+}
+
+function buildWorkbench(tier) {
+  const { L, W, H, feats } = state;
+  const up = tier === "up";
+  const w = Math.max(L, 3), d = Math.max(W, 2), h = Math.max(H, 2.8);
+  interior(w + 6, d + 5, h + 5);
+  const topMat = up ? mat(0x9a6b42) : PAL.woodPT();
+  const legMat = up ? mat(0x2a2d33, 0.4, 0.6) : PAL.woodPT();
+  box(w, 0.35, d, topMat, 0, h, 0);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) box(0.25, h, 0.25, legMat, sx * (w/2 - 0.25), h/2, sz * (d/2 - 0.25));
+  box(w - 0.5, 0.15, d - 0.4, up ? mat(0x8a6a4a) : PAL.woodPT(), 0, 0.8, 0);   // lower shelf
+  for (const sz of [-1, 1]) box(w - 0.5, 0.15, 0.15, legMat, 0, h - 0.6, sz * (d/2 - 0.25));
+  box(w, 2.5, 0.1, up ? mat(0xcaa876) : mat(0xd8c8a8), 0, h + 1.25, -d/2 + 0.05);  // pegboard
+  if (up) {
+    const tc = [0xc0392b, 0x2980b9, 0xf1c40f, 0x27ae60];
+    for (let i = 0; i < 5; i++) box(0.12, 0.5 + Math.random() * 0.4, 0.06, mat(tc[i % 4], 0.6), -w/2 + 1 + i * (w - 2)/5, h + 1.5, -d/2 + 0.13);
+    box(1.0, 0.5, 0.6, mat(0x333, 0.5), w/2 - 1.2, h + 0.25, 0);              // vise
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) cyl(0.2, 0.2, 0.15, mat(0x222, 0.4), sx * (w/2 - 0.25), 0.1, sz * (d/2 - 0.25)).rotation.x = Math.PI/2;  // casters
+  }
+  if (feats.lighting) box(w - 1, 0.1, 0.2, PAL.light(), 0, h + 2.4, -d/2 + 0.3);
+  scaleFigure(w/2 + 3, d/2 + 1);
+  label(`${state.L}' × ${state.W}' bench`, 0, h + 0.6, d/2 + 2.5);
+  return { focusY: h, size: Math.max(w, h + 2.5) + 6 };
+}
+
+function buildCustom(tier) {
+  const { L, W, H, feats } = state;
+  const up = tier === "up";
+  const w = Math.max(L, 2), d = Math.max(W, 1), h = Math.max(H, 2);
+  interior(w + 6, d + 5, h + 3);
+  const body = up ? mat(0x6b4a2f) : mat(0xe9e5db);
+  const door = up ? mat(0x7a5638) : mat(0xf3f0ea);
+  box(w, 0.4, d, mat(0x2e2e2e), 0, 0.2, 0);
+  box(w, h - 0.4, d, body, 0, 0.4 + (h - 0.4)/2, 0);
+  const mid = 0.4 + (h - 0.4) * 0.5;
+  const nD = Math.max(1, Math.round(w / 1.8));
+  for (let i = 0; i < nD; i++) { const dw = w/nD, cx = -w/2 + (i + 0.5) * dw; box(dw - 0.1, (h - 0.4) * 0.5 - 0.1, 0.08, door, cx, 0.4 + (h - 0.4) * 0.25, d/2 + 0.02); handle(cx, mid - 0.3, d/2 + 0.06, up); }
+  const shelves = Math.max(1, Math.round((h * 0.5) / 1.1));
+  for (let s = 0; s <= shelves; s++) box(w - 0.2, 0.1, d - 0.15, body, 0, mid + s * ((h - 0.4) * 0.5 / shelves), 0);
+  if (up || feats.lighting) for (let s = 0; s < shelves; s++) box(w - 0.3, 0.05, 0.05, PAL.light(), 0, mid + s * ((h - 0.4) * 0.5 / shelves) - 0.07, d/2 - 0.15);
+  books(-w/5, mid + 0.05, 0, w * 0.4);
+  scaleFigure(w/2 + 3, 3);
+  label(`Custom · ${state.L}'×${state.W}'×${state.H}'`, 0, h + 0.7, d/2 + 2.5);
+  return { focusY: h/2, size: Math.max(w, h) + 7 };
+}
+
 const BUILDERS = {
   deck: buildDeck,
   shed: t => buildShedLike(t, "shed"),
@@ -1471,7 +1715,14 @@ const BUILDERS = {
   walkway: buildWalkway,
   stairs: buildStairs,
   ramp: buildRamp,
-  planter: buildPlanter
+  planter: buildPlanter,
+  cabinets: buildCabinets,
+  builtin: buildBuiltin,
+  armoire: buildArmoire,
+  desk: buildDesk,
+  vanity: buildVanity,
+  workbench: buildWorkbench,
+  custom: buildCustom
 };
 
 /* ============================================================
@@ -1489,7 +1740,7 @@ function rebuild3D() {
 
   const info = BUILDERS[state.type](state.tier);
   orbit.target.set(0, Math.min(info.focusY, 8), 0);
-  orbit.dist = Math.max(18, info.size * 1.7);
+  orbit.dist = Math.max(11, info.size * 1.7);
   applyCamera();
 }
 

@@ -14,11 +14,13 @@ description of what the client wants, and get an interactive 3D preview with
 
 1. Open `index.html` in any browser (double-click it — no install, no internet
    needed once you have the two files).
-2. Pick what you're building — 18 job types, grouped big-to-small:
+2. Pick what you're building — 25 job types, grouped big-to-small:
    - **Structures:** Room Addition, Sunroom, Garage, Pole Barn, Shed
    - **Outdoor Living:** Deck, Covered Porch, Patio, Pergola, Gazebo, Carport
    - **Groundwork:** Driveway, Walkway, Retaining Wall, Fence
    - **Small Projects:** Exterior Stairs, Wheelchair Ramp, Raised Garden Beds
+   - **Cabinetry & Custom:** Kitchen Cabinets, Built-in Shelving, Armoire/Wardrobe,
+     Custom Desk, Bathroom Vanity, Workbench, and a flexible **Custom Build**
 3. Enter the measurements in feet.
 4. Describe the job in plain words — the app automatically picks up things like
    *stairs, railing, lighting, pergola, fire pit, gate, bench, hot tub,
