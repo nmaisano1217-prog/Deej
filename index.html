@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BuildView 3D — Show clients what you'll build</title>
+<style>
+  :root{
+    --bg:#16181d; --panel:#1f232b; --panel2:#262b35; --line:#343b48;
+    --text:#e8eaee; --muted:#9aa3b2; --accent:#ff7a1a; --accent2:#ffb26b;
+    --good:#3ecf8e; --radius:12px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--text); overflow:hidden;
+  }
+  header{
+    display:flex; align-items:center; gap:12px; padding:10px 18px;
+    background:var(--panel); border-bottom:1px solid var(--line); height:56px;
+  }
+  header .logo{
+    width:34px;height:34px;border-radius:8px;background:var(--accent);
+    display:flex;align-items:center;justify-content:center;font-size:19px;
+  }
+  header h1{font-size:17px;font-weight:700;letter-spacing:.2px;}
+  header .sub{color:var(--muted);font-size:12px;margin-top:1px;}
+  header .spacer{flex:1;}
+  header button{white-space:nowrap;}
+
+  .app{display:flex; height:calc(100% - 56px);}
+
+  /* ---------- Sidebar form ---------- */
+  aside{
+    width:330px; min-width:330px; background:var(--panel); border-right:1px solid var(--line);
+    padding:16px; overflow-y:auto;
+  }
+  aside h2{font-size:12px; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin:18px 0 8px;}
+  aside h2:first-child{margin-top:0;}
+  label{display:block; font-size:12.5px; color:var(--muted); margin:10px 0 4px;}
+  input[type=text], input[type=number], textarea, select{
+    width:100%; background:var(--panel2); border:1px solid var(--line); color:var(--text);
+    border-radius:8px; padding:9px 10px; font-size:14px; font-family:inherit;
+  }
+  input:focus, textarea:focus, select:focus{outline:2px solid var(--accent); outline-offset:-1px; border-color:transparent;}
+  textarea{resize:vertical; min-height:88px; line-height:1.45;}
+  .row{display:flex; gap:8px;}
+  .row > div{flex:1;}
+  .typegrid{display:grid; grid-template-columns:1fr 1fr; gap:7px;}
+  .typegrid button{
+    background:var(--panel2); border:1px solid var(--line); color:var(--text);
+    border-radius:8px; padding:10px 6px; font-size:13px; cursor:pointer; font-family:inherit;
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+  }
+  .typegrid button .ic{font-size:18px;}
+  .typegrid button.active{border-color:var(--accent); background:#2e2418; color:var(--accent2);}
+  .chips{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; min-height:10px;}
+  .chip{
+    font-size:11.5px; background:#243422; color:var(--good); border:1px solid #33513a;
+    padding:3px 9px; border-radius:99px;
+  }
+  .chip.warn{background:#3a2f1c; color:var(--accent2); border-color:#5a4423;}
+  .genbtn{
+    width:100%; margin-top:16px; background:var(--accent); color:#1a1206; border:none;
+    font-size:15px; font-weight:700; padding:13px; border-radius:10px; cursor:pointer; font-family:inherit;
+  }
+  .genbtn:hover{background:var(--accent2);}
+  .hint{font-size:11.5px; color:var(--muted); line-height:1.5; margin-top:10px;}
+
+  /* ---------- Viewport ---------- */
+  main{flex:1; display:flex; flex-direction:column; min-width:0;}
+  .viewport{flex:1; position:relative; min-height:0;}
+  .viewport canvas{display:block;}
+  .overlay-top{
+    position:absolute; top:12px; left:12px; right:12px; display:flex; align-items:flex-start; gap:10px;
+    pointer-events:none;
+  }
+  .overlay-top > *{pointer-events:auto;}
+  .seg{
+    display:flex; background:rgba(22,24,29,.88); border:1px solid var(--line); border-radius:10px; overflow:hidden;
+    backdrop-filter:blur(6px);
+  }
+  .seg button{
+    background:none; border:none; color:var(--muted); font-family:inherit; font-size:13.5px; font-weight:600;
+    padding:9px 18px; cursor:pointer;
+  }
+  .seg button.active{background:var(--accent); color:#1a1206;}
+  .pricebadge{
+    background:rgba(22,24,29,.88); border:1px solid var(--line); border-radius:10px;
+    padding:7px 14px; backdrop-filter:blur(6px);
+  }
+  .pricebadge .p{font-size:16px; font-weight:700; color:var(--accent2);}
+  .pricebadge .t{font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em;}
+  .overlay-top .spacer{flex:1;}
+  .viewtools{display:flex; gap:8px;}
+  .viewtools button, .viewtools label{
+    background:rgba(22,24,29,.88); border:1px solid var(--line); color:var(--text);
+    border-radius:10px; padding:8px 12px; font-size:12.5px; cursor:pointer; font-family:inherit;
+    display:flex; align-items:center; gap:6px; margin:0;
+  }
+  .viewtools button:hover{border-color:var(--accent);}
+  .empty{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    color:var(--muted); gap:10px; text-align:center; padding:20px;
+  }
+  .empty .big{font-size:42px;}
+  .empty p{max-width:420px; line-height:1.6; font-size:14px;}
+
+  /* ---------- Compare panel ---------- */
+  .compare{
+    display:flex; gap:12px; padding:12px; background:var(--panel); border-top:1px solid var(--line);
+    max-height:270px; overflow-y:auto;
+  }
+  .card{
+    flex:1; background:var(--panel2); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px;
+    min-width:0;
+  }
+  .card.selected{border-color:var(--accent);}
+  .card .cardhead{display:flex; align-items:baseline; gap:10px; margin-bottom:8px;}
+  .card .tier{font-size:14px; font-weight:700;}
+  .card .tier.up{color:var(--accent2);}
+  .card .price{margin-left:auto; font-size:17px; font-weight:700;}
+  .card .range{font-size:11px; color:var(--muted);}
+  .card ul{list-style:none; margin-top:6px;}
+  .card li{font-size:12.5px; color:var(--text); padding:3px 0 3px 20px; position:relative; line-height:1.45;}
+  .card li::before{content:"✓"; position:absolute; left:2px; color:var(--good); font-weight:700;}
+  .card li.addon::before{content:"+"; color:var(--accent2);}
+  .card .viewbtn{
+    margin-top:10px; background:none; border:1px solid var(--line); color:var(--text); border-radius:8px;
+    padding:6px 14px; font-size:12px; cursor:pointer; font-family:inherit;
+  }
+  .card .viewbtn:hover{border-color:var(--accent);}
+  .disclaimer{font-size:10.5px; color:var(--muted); padding:0 14px 10px; background:var(--panel); line-height:1.5;}
+
+  /* ---------- Print sheet ---------- */
+  #printSheet{display:none;}
+  @media print{
+    body > *{display:none !important;}
+    body{overflow:visible; background:#fff; color:#111;}
+    #printSheet{display:block !important; padding:24px; font-size:13px;}
+    #printSheet h1{font-size:22px; margin-bottom:2px;}
+    #printSheet .psub{color:#555; margin-bottom:14px;}
+    #printSheet img{width:100%; max-height:340px; object-fit:cover; border-radius:8px; margin-bottom:14px;}
+    #printSheet .pcols{display:flex; gap:18px;}
+    #printSheet .pcard{flex:1; border:1.5px solid #ccc; border-radius:8px; padding:14px;}
+    #printSheet .pcard.up{border-color:#e07000;}
+    #printSheet .pcard h3{margin-bottom:2px;}
+    #printSheet .pcard .pp{font-size:19px; font-weight:700; margin-bottom:8px;}
+    #printSheet ul{margin-left:18px; line-height:1.6;}
+    #printSheet .pdisc{margin-top:16px; font-size:10px; color:#777; line-height:1.5;}
+  }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 860px){
+    body{overflow:auto;}
+    .app{flex-direction:column; height:auto;}
+    aside{width:100%; min-width:0; border-right:none; border-bottom:1px solid var(--line);}
+    .viewport{height:60vh;}
+    .compare{flex-direction:column; max-height:none;}
+    header h1{font-size:15px;}
+    header .sub{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🏗️</div>
+  <div>
+    <h1>BuildView 3D</h1>
+    <div class="sub">Show clients what you'll build — before you build it</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="viewtools">
+    <button id="btnPrint" title="Print a one-page client summary">🖨️ Print for client</button>
+  </div>
+</header>
+
+<div class="app">
+  <aside>
+    <h2>Project</h2>
+    <label>Client / project name</label>
+    <input type="text" id="inName" placeholder="e.g. Johnson backyard deck">
+
+    <h2>What are you building?</h2>
+    <div class="typegrid" id="typeGrid">
+      <button data-type="deck" class="active"><span class="ic">🪵</span>Deck</button>
+      <button data-type="shed"><span class="ic">🏠</span>Shed</button>
+      <button data-type="garage"><span class="ic">🚗</span>Garage</button>
+      <button data-type="addition"><span class="ic">🧱</span>Room Addition</button>
+      <button data-type="fence"><span class="ic">🚧</span>Fence</button>
+      <button data-type="patio"><span class="ic">⛱️</span>Patio</button>
+    </div>
+
+    <h2>Measurements (feet)</h2>
+    <div class="row">
+      <div>
+        <label id="lblL">Length</label>
+        <input type="number" id="inL" value="16" min="1" max="200" step="0.5">
+      </div>
+      <div id="wrapW">
+        <label id="lblW">Width</label>
+        <input type="number" id="inW" value="12" min="1" max="200" step="0.5">
+      </div>
+      <div>
+        <label id="lblH">Height</label>
+        <input type="number" id="inH" value="3" min="0" max="30" step="0.5">
+      </div>
+    </div>
+
+    <h2>What does the client want?</h2>
+    <label>Describe it in plain words — details are picked up automatically</label>
+    <textarea id="inDesc" placeholder="e.g. 16 by 12 deck about 3 feet off the ground, needs stairs down to the yard, client mentioned they'd like lighting and maybe a pergola over part of it"></textarea>
+    <div class="chips" id="chips"></div>
+
+    <h2>Pricing</h2>
+    <label id="lblRate">Your base rate ($ per sq ft)</label>
+    <input type="number" id="inRate" value="40" min="1" step="1">
+    <div class="hint">Rate auto-fills a typical figure when you switch project type — override it with your own number. The upgraded option prices itself from your base rate.</div>
+
+    <button class="genbtn" id="btnGen">Generate 3D Preview</button>
+    <div class="hint">Drag to spin · scroll to zoom · works on phones and tablets. Use <b>Print for client</b> to hand over a one-page summary with both options.</div>
+  </aside>
+
+  <main>
+    <div class="viewport" id="viewport">
+      <div class="empty" id="emptyMsg">
+        <div class="big">📐</div>
+        <p><b>Enter the measurements and a quick description on the left,</b> then hit <b>Generate 3D Preview</b>. You'll get two versions to show the client — the standard build, and an upgraded option for a little more.</p>
+      </div>
+      <div class="overlay-top" id="overlayTop" style="display:none">
+        <div class="seg">
+          <button id="segBasic" class="active">Standard</button>
+          <button id="segUp">⭐ Upgraded</button>
+        </div>
+        <div class="pricebadge">
+          <div class="t" id="badgeTier">Standard build</div>
+          <div class="p" id="badgePrice">$0</div>
+        </div>
+        <div class="spacer"></div>
+        <div class="viewtools">
+          <button id="btnShot" title="Save a picture to text the client">📷 Photo</button>
+          <button id="btnSpin" title="Toggle slow auto-spin">🔄 Spin</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="compare" id="compare" style="display:none">
+      <div class="card selected" id="cardBasic">
+        <div class="cardhead">
+          <span class="tier">STANDARD</span>
+          <span class="price" id="priceBasic">$0</span>
+        </div>
+        <div class="range" id="rangeBasic"></div>
+        <ul id="listBasic"></ul>
+        <button class="viewbtn" data-tier="basic">View in 3D</button>
+      </div>
+      <div class="card" id="cardUp">
+        <div class="cardhead">
+          <span class="tier up">⭐ UPGRADED</span>
+          <span class="price" id="priceUp">$0</span>
+        </div>
+        <div class="range" id="rangeUp"></div>
+        <ul id="listUp"></ul>
+        <button class="viewbtn" data-tier="up">View in 3D</button>
+      </div>
+    </div>
+    <div class="disclaimer" id="disclaimer" style="display:none">
+      Prices are rough planning estimates generated from your base rate — not a quote. Final pricing depends on site conditions, materials, permits and local codes.
+    </div>
+  </main>
+</div>
+
+<div id="printSheet"></div>
+
+<script src="three.min.js"></script>
+<script>
+"use strict";
+
+/* ============================================================
+   CONFIG — project types, default rates, features, upgrades
+   ============================================================ */
+
+const TYPES = {
+  deck: {
+    name: "Deck", unit: "sq ft", rate: 40, upMult: 1.55,
+    labels: { L: "Length", W: "Width", H: "Height off ground" },
+    basic: ["Pressure-treated lumber decking", "Concrete pier footings", "Standard wood railing (if over 30\")", "Galvanized hardware"],
+    up: ["Composite decking — no staining, 25-yr warranty", "Black aluminum balusters w/ wood top rail", "Post caps + fascia trim wrap", "Hidden fasteners (no visible screws)"]
+  },
+  shed: {
+    name: "Shed", unit: "sq ft", rate: 55, upMult: 1.5,
+    labels: { L: "Length", W: "Width", H: "Wall height" },
+    basic: ["Framed walls on treated skids", "Asphalt shingle gable roof", "Single door + one window", "Exterior-grade siding, painted"],
+    up: ["Architectural shingles + roof overhangs", "Double doors with ramp", "Two windows w/ trim & flower boxes", "Cupola + upgraded siding color"]
+  },
+  garage: {
+    name: "Garage", unit: "sq ft", rate: 70, upMult: 1.45,
+    labels: { L: "Length", W: "Width", H: "Wall height" },
+    basic: ["Slab-on-grade concrete floor", "Standard sectional garage door", "Asphalt shingle roof", "One service window"],
+    up: ["Carriage-style insulated door w/ windows", "Side entry door + extra window", "Architectural shingles + overhangs", "Exterior lighting package"]
+  },
+  addition: {
+    name: "Room Addition", unit: "sq ft", rate: 185, upMult: 1.4,
+    labels: { L: "Length", W: "Width", H: "Wall height" },
+    basic: ["Full foundation + framed walls", "Standard vinyl windows", "Siding matched to house", "Electrical + insulation to code"],
+    up: ["Oversized windows for more light", "French patio door", "Upgraded trim package inside & out", "Premium siding + architectural roof"]
+  },
+  fence: {
+    name: "Fence", unit: "linear ft", rate: 32, upMult: 1.6,
+    labels: { L: "Total length", W: null, H: "Fence height" },
+    basic: ["Pressure-treated posts set in concrete", "Standard picket panels", "Galvanized fasteners", "Posts every 8 ft"],
+    up: ["Cedar-tone stained boards", "Decorative lattice top", "Solar post cap lights", "Premium post caps"]
+  },
+  patio: {
+    name: "Patio", unit: "sq ft", rate: 14, upMult: 1.85,
+    labels: { L: "Length", W: "Width", H: null },
+    basic: ["Broom-finish concrete slab", "Compacted gravel base", "Control joints to prevent cracking", "Standard gray finish"],
+    up: ["Stamped & colored concrete finish", "Decorative border band", "Seating wall along one edge", "Sealed finish — resists stains"]
+  }
+};
+
+/* Features detected from the description. cost = [standard adder, upgraded adder] */
+const FEATURES = {
+  stairs:   { re: /\bstair|\bsteps?\b/i,            label: "Stairs",          cost: [900, 1400],  types: ["deck"] },
+  lighting: { re: /\blight|\bled\b/i,               label: "Lighting",        cost: [450, 950],   types: ["deck","patio","garage","shed","fence","addition"] },
+  pergola:  { re: /pergola|shade structure/i,       label: "Pergola",         cost: [2600, 4200], types: ["deck","patio"] },
+  firepit:  { re: /fire\s?pit/i,                    label: "Fire pit",        cost: [1800, 2600], types: ["patio"] },
+  gate:     { re: /\bgate/i,                        label: "Gate",            cost: [350, 600],   types: ["fence"] },
+  bench:    { re: /\bbench|built.?in seat/i,        label: "Built-in bench",  cost: [650, 1100],  types: ["deck","patio"] },
+  hottub:   { re: /hot\s?tub|jacuzzi|\bspa\b/i,     label: "Hot tub (shown for scale — tub by owner)", cost: [0, 0], types: ["deck","patio"] },
+  window:   { re: /window/i,                        label: "Windows noted",   cost: [0, 0],       types: ["shed","garage","addition"] },
+  skylight: { re: /skylight/i,                      label: "Skylight",        cost: [1200, 1900], types: ["addition","garage"] }
+};
+
+const fmt$ = n => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
+const round50 = n => Math.round(n / 50) * 50;
+
+/* ============================================================
+   STATE + FORM WIRING
+   ============================================================ */
+
+const state = {
+  type: "deck", L: 16, W: 12, H: 3, name: "", desc: "",
+  rate: TYPES.deck.rate, rateTouched: false,
+  tier: "basic", feats: {}, generated: false, autoSpin: false
+};
+
+const $ = id => document.getElementById(id);
+
+$("typeGrid").addEventListener("click", e => {
+  const btn = e.target.closest("button[data-type]");
+  if (!btn) return;
+  document.querySelectorAll("#typeGrid button").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  state.type = btn.dataset.type;
+  applyTypeToForm();
+});
+
+function applyTypeToForm() {
+  const t = TYPES[state.type];
+  $("lblL").textContent = t.labels.L;
+  $("wrapW").style.display = t.labels.W ? "" : "none";
+  if (t.labels.W) $("lblW").textContent = t.labels.W;
+  $("inH").parentElement.style.display = t.labels.H ? "" : "none";
+  if (t.labels.H) $("lblH").textContent = t.labels.H;
+  $("lblRate").textContent = `Your base rate ($ per ${t.unit})`;
+  if (!state.rateTouched) { state.rate = t.rate; $("inRate").value = t.rate; }
+  // sensible default heights per type
+  const defH = { deck: 3, shed: 8, garage: 9, addition: 9, fence: 6, patio: 0 }[state.type];
+  $("inH").value = defH;
+  updateChips();
+}
+
+$("inRate").addEventListener("input", () => { state.rateTouched = true; });
+$("inDesc").addEventListener("input", updateChips);
+
+function detectFeatures() {
+  const desc = $("inDesc").value;
+  const found = {};
+  for (const [key, f] of Object.entries(FEATURES)) {
+    if (f.types.includes(state.type) && f.re.test(desc)) found[key] = true;
+  }
+  // decks 18"+ off the ground practically need stairs; 30"+ needs railing by code
+  const H = parseFloat($("inH").value) || 0;
+  if (state.type === "deck" && H >= 1.5) found.stairs = true;
+  return found;
+}
+
+function updateChips() {
+  const found = detectFeatures();
+  const chips = Object.keys(found).map(k => `<span class="chip">✓ ${FEATURES[k].label}</span>`);
+  const H = parseFloat($("inH").value) || 0;
+  if (state.type === "deck" && H >= 2.5) chips.push(`<span class="chip warn">Railing required (30"+ height)</span>`);
+  $("chips").innerHTML = chips.join("");
+}
+$("inH").addEventListener("input", updateChips);
+
+/* ============================================================
+   PRICING
+   ============================================================ */
+
+function priceOut(tier) {
+  const t = TYPES[state.type];
+  const qty = t.unit === "linear ft" ? state.L : state.L * state.W;
+  let base = qty * state.rate;
+  if (state.type === "fence") base *= Math.max(0.7, state.H / 6);   // scale with fence height
+  if (tier === "up") base *= t.upMult;
+  let total = base;
+  const items = [];
+  for (const k of Object.keys(state.feats)) {
+    const f = FEATURES[k];
+    const c = f.cost[tier === "up" ? 1 : 0];
+    if (c > 0) { total += c; items.push({ label: f.label, cost: c }); }
+  }
+  return { total: round50(total), lo: round50(total * 0.9), hi: round50(total * 1.15), items };
+}
+
+/* ============================================================
+   THREE.JS SCENE
+   ============================================================ */
+
+const viewport = $("viewport");
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputEncoding = THREE.sRGBEncoding;
+viewport.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xb8d4e8);
+scene.fog = new THREE.Fog(0xb8d4e8, 120, 320);
+
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+
+/* Lights */
+const hemi = new THREE.HemisphereLight(0xdfeeff, 0x557744, 0.75);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff2dd, 1.15);
+sun.position.set(40, 60, 25);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.bias = -0.0004;
+scene.add(sun);
+
+/* Ground */
+const ground = new THREE.Mesh(
+  new THREE.CircleGeometry(220, 48),
+  new THREE.MeshStandardMaterial({ color: 0x5e8c4a, roughness: 1 })
+);
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+/* The build lives inside this group — rebuilt on every generate/toggle */
+let buildGroup = new THREE.Group();
+scene.add(buildGroup);
+
+/* ---------- Camera orbit (custom, touch-friendly) ---------- */
+const orbit = { yaw: 0.7, pitch: 0.42, dist: 40, target: new THREE.Vector3(0, 3, 0) };
+function applyCamera() {
+  orbit.pitch = Math.max(0.06, Math.min(1.35, orbit.pitch));
+  orbit.dist = Math.max(6, Math.min(240, orbit.dist));
+  const cy = Math.cos(orbit.pitch), sy = Math.sin(orbit.pitch);
+  camera.position.set(
+    orbit.target.x + orbit.dist * cy * Math.sin(orbit.yaw),
+    orbit.target.y + orbit.dist * sy,
+    orbit.target.z + orbit.dist * cy * Math.cos(orbit.yaw)
+  );
+  camera.lookAt(orbit.target);
+}
+
+const pointers = new Map();
+let pinchDist = 0;
+renderer.domElement.style.touchAction = "none";
+renderer.domElement.addEventListener("pointerdown", e => {
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  renderer.domElement.setPointerCapture(e.pointerId);
+});
+renderer.domElement.addEventListener("pointermove", e => {
+  if (!pointers.has(e.pointerId)) return;
+  const p = pointers.get(e.pointerId);
+  const dx = e.clientX - p.x, dy = e.clientY - p.y;
+  p.x = e.clientX; p.y = e.clientY;
+  if (pointers.size === 1) {
+    orbit.yaw -= dx * 0.006;
+    orbit.pitch += dy * 0.005;
+  } else if (pointers.size === 2) {
+    const pts = [...pointers.values()];
+    const d = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+    if (pinchDist) orbit.dist *= pinchDist / d;
+    pinchDist = d;
+  }
+  applyCamera();
+});
+const endPointer = e => { pointers.delete(e.pointerId); pinchDist = 0; };
+renderer.domElement.addEventListener("pointerup", endPointer);
+renderer.domElement.addEventListener("pointercancel", endPointer);
+renderer.domElement.addEventListener("wheel", e => {
+  e.preventDefault();
+  orbit.dist *= 1 + Math.sign(e.deltaY) * 0.09;
+  applyCamera();
+}, { passive: false });
+
+function resize() {
+  const w = viewport.clientWidth, h = viewport.clientHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+window.addEventListener("resize", resize);
+new ResizeObserver(resize).observe(viewport);
+
+let lastT = 0;
+function animate(t) {
+  requestAnimationFrame(animate);
+  const dt = (t - lastT) / 1000; lastT = t;
+  if (state.autoSpin && pointers.size === 0) { orbit.yaw += dt * 0.25; applyCamera(); }
+  renderer.render(scene, camera);
+}
+resize(); applyCamera(); requestAnimationFrame(animate);
+
+/* ---------- Small geometry helpers ---------- */
+
+function mat(color, rough = 0.85, metal = 0) {
+  return new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: metal });
+}
+function box(w, h, d, material, x = 0, y = 0, z = 0, parent = buildGroup) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
+  m.position.set(x, y, z);
+  m.castShadow = m.receiveShadow = true;
+  parent.add(m);
+  return m;
+}
+function cyl(rTop, rBot, h, material, x = 0, y = 0, z = 0, parent = buildGroup, seg = 20) {
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(rTop, rBot, h, seg), material);
+  m.position.set(x, y, z);
+  m.castShadow = m.receiveShadow = true;
+  parent.add(m);
+  return m;
+}
+/* Triangular prism used for gable roofs: width w (x), peak h (y), depth d (z) */
+function prism(w, h, d, material, x = 0, y = 0, z = 0, parent = buildGroup) {
+  const hw = w / 2, hd = d / 2;
+  const v = [
+    -hw,0, hd,   hw,0, hd,   0,h, hd,      // front tri
+     hw,0,-hd,  -hw,0,-hd,   0,h,-hd,      // back tri
+     hw,0, hd,   hw,0,-hd,   0,h,-hd,      // right slope
+     hw,0, hd,   0,h,-hd,    0,h, hd,
+    -hw,0,-hd,  -hw,0, hd,   0,h, hd,      // left slope
+    -hw,0,-hd,   0,h, hd,    0,h,-hd
+  ];
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(v, 3));
+  g.computeVertexNormals();
+  material = material.clone(); material.side = THREE.DoubleSide;
+  const m = new THREE.Mesh(g, material);
+  m.position.set(x, y, z);
+  m.castShadow = m.receiveShadow = true;
+  parent.add(m);
+  return m;
+}
+/* Text label rendered onto a sprite (for dimensions) */
+function label(text, x, y, z, scale = 1) {
+  const c = document.createElement("canvas");
+  c.width = 512; c.height = 128;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = "rgba(22,24,29,0.82)";
+  const w = ctx.measureText(text).width;
+  ctx.font = "bold 64px sans-serif";
+  const tw = ctx.measureText(text).width + 60;
+  roundRect(ctx, (512 - tw) / 2, 14, tw, 100, 24);
+  ctx.fillStyle = "#ffffff";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(text, 256, 66);
+  const tex = new THREE.CanvasTexture(c);
+  const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false }));
+  spr.scale.set(7 * scale, 1.75 * scale, 1);
+  spr.position.set(x, y, z);
+  buildGroup.add(spr);
+  return spr;
+}
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.fill();
+}
+/* 6 ft human figure for scale */
+function scaleFigure(x, z) {
+  const g = new THREE.Group();
+  const c = mat(0x8b96a8, 0.9);
+  const body = cyl(0.55, 0.62, 3.4, c, 0, 2.6, 0, g);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.55, 16, 12), c);
+  head.position.set(0, 5.1, 0); head.castShadow = true; g.add(head);
+  const legs = cyl(0.5, 0.55, 1.8, c, 0, 0.9, 0, g);
+  g.position.set(x, 0, z);
+  buildGroup.add(g);
+  return g;
+}
+
+/* ---------- Shared palettes ---------- */
+const PAL = {
+  woodPT:    () => mat(0xb9925f),          // pressure treated
+  woodDark:  () => mat(0x6b4a2f),          // stained / composite
+  composite: () => mat(0x7a5844, 0.7),
+  trimWhite: () => mat(0xf2efe8, 0.6),
+  metal:     () => mat(0x2a2d33, 0.4, 0.6),
+  glass:     () => new THREE.MeshStandardMaterial({ color: 0x9fc8e8, roughness: 0.15, metalness: 0.3 }),
+  shingleA:  () => mat(0x555a60),
+  shingleUp: () => mat(0x3a3f46),
+  siding:    () => mat(0xcfc4a8),
+  sidingUp:  () => mat(0x8fa3b5),
+  concrete:  () => mat(0xb5b2ac, 0.95),
+  stamped:   () => mat(0xa88f74, 0.9),
+  light:     () => new THREE.MeshStandardMaterial({ color: 0xffd98a, emissive: 0xffb545, emissiveIntensity: 1.4 })
+};
+
+/* ============================================================
+   BUILDERS — one per project type. tier = "basic" | "up"
+   ============================================================ */
+
+function buildDeck(tier) {
+  const { L, W, H, feats } = state;
+  const up = tier === "up";
+  const deckMat = up ? PAL.composite() : PAL.woodPT();
+  const frameMat = up ? PAL.woodDark() : PAL.woodPT();
+  const deckTop = Math.max(H, 0.8);
+
+  // posts
+  const postMat = frameMat;
+  for (let x = -L/2 + 0.5; x <= L/2 - 0.4; x += Math.max(4, (L-1) / Math.max(1, Math.round((L-1)/6)))) {
+    for (let z = -W/2 + 0.5; z <= W/2 - 0.4; z += Math.max(4, (W-1) / Math.max(1, Math.round((W-1)/6)))) {
+      box(0.45, deckTop, 0.45, postMat, x, deckTop/2, z);
+    }
+  }
+  // rim joists
+  box(L, 0.8, 0.25, frameMat, 0, deckTop - 0.4, W/2 - 0.12);
+  box(L, 0.8, 0.25, frameMat, 0, deckTop - 0.4, -W/2 + 0.12);
+  box(0.25, 0.8, W, frameMat, L/2 - 0.12, deckTop - 0.4, 0);
+  box(0.25, 0.8, W, frameMat, -L/2 + 0.12, deckTop - 0.4, 0);
+  // fascia wrap (upgraded)
+  if (up) {
+    box(L + 0.2, 1.0, 0.1, PAL.trimWhite(), 0, deckTop - 0.4, W/2 + 0.06);
+    box(L + 0.2, 1.0, 0.1, PAL.trimWhite(), 0, deckTop - 0.4, -W/2 - 0.06);
+    box(0.1, 1.0, W + 0.2, PAL.trimWhite(), L/2 + 0.06, deckTop - 0.4, 0);
+    box(0.1, 1.0, W + 0.2, PAL.trimWhite(), -L/2 - 0.06, deckTop - 0.4, 0);
+  }
+  // deck boards
+  const bw = 0.48, gap = 0.05;
+  for (let z = -W/2 + bw/2; z < W/2; z += bw + gap) {
+    box(L, 0.12, bw, deckMat, 0, deckTop + 0.06, z);
+  }
+
+  // railing (required over 30")
+  const needRail = H >= 2.5 || up;
+  const railH = 3;
+  if (needRail) {
+    const balMat = up ? PAL.metal() : PAL.woodPT();
+    const topMat = up ? PAL.woodDark() : PAL.woodPT();
+    const sides = [
+      { x1: -L/2, z1: -W/2, x2: L/2, z2: -W/2 },
+      { x1: -L/2, z1: W/2, x2: L/2, z2: W/2, skipMid: feats.stairs },  // stairs side gap
+      { x1: -L/2, z1: -W/2, x2: -L/2, z2: W/2 },
+      { x1: L/2, z1: -W/2, x2: L/2, z2: W/2 }
+    ];
+    for (const s of sides) {
+      const len = Math.hypot(s.x2 - s.x1, s.z2 - s.z1);
+      const n = Math.max(1, Math.round(len / 4.5));
+      for (let i = 0; i <= n; i++) {
+        const t = i / n;
+        const px = s.x1 + (s.x2 - s.x1) * t, pz = s.z1 + (s.z2 - s.z1) * t;
+        if (s.skipMid && Math.abs(px) < 2.2 && i !== 0 && i !== n) continue;
+        box(0.3, railH, 0.3, topMat, px, deckTop + railH/2, pz);
+        if (up) {  // post cap lights
+          const cap = box(0.42, 0.12, 0.42, PAL.woodDark(), px, deckTop + railH + 0.06, pz);
+          if (feats.lighting) box(0.2, 0.14, 0.2, PAL.light(), px, deckTop + railH + 0.19, pz);
+        }
+      }
+      // top rail + balusters per segment
+      for (let i = 0; i < n; i++) {
+        const t0 = i / n, t1 = (i + 1) / n;
+        const mx = s.x1 + (s.x2 - s.x1) * (t0 + t1)/2, mz = s.z1 + (s.z2 - s.z1) * (t0 + t1)/2;
+        if (s.skipMid && Math.abs(mx) < 2.2) continue;
+        const segLen = len / n;
+        const horiz = Math.abs(s.x2 - s.x1) > Math.abs(s.z2 - s.z1);
+        box(horiz ? segLen - 0.35 : 0.22, 0.18, horiz ? 0.22 : segLen - 0.35, topMat, mx, deckTop + railH - 0.1, mz);
+        box(horiz ? segLen - 0.35 : 0.15, 0.12, horiz ? 0.15 : segLen - 0.35, topMat, mx, deckTop + 0.35, mz);
+        const nb = Math.floor(segLen / 0.45);
+        for (let b = 1; b < nb; b++) {
+          const bt = t0 + (t1 - t0) * (b / nb);
+          const bx = s.x1 + (s.x2 - s.x1) * bt, bz = s.z1 + (s.z2 - s.z1) * bt;
+          if (s.skipMid && Math.abs(bx) < 2.2) continue;
+          box(up ? 0.07 : 0.12, railH - 0.6, up ? 0.07 : 0.12, balMat, bx, deckTop + railH/2 - 0.1, bz);
+        }
+      }
+    }
+  }
+
+  // stairs
+  if (feats.stairs && deckTop > 1) {
+    const rise = 0.58, run = 0.92, stW = up ? 4.6 : 4;
+    const steps = Math.max(2, Math.round(deckTop / rise));
+    for (let i = 1; i <= steps; i++) {
+      const y = deckTop - i * (deckTop / steps);
+      box(stW, 0.14, run, deckMat, 0, y + 0.07, W/2 + i * run - run/2 + 0.1);
+      box(stW - 0.2, (deckTop/steps) - 0.1, 0.15, frameMat, 0, y + (deckTop/steps)/2 - 0.02, W/2 + i * run - run + 0.18);
+    }
+  }
+
+  // pergola over back half (upgraded + keyword)
+  if (feats.pergola && up) {
+    const pgMat = PAL.woodDark();
+    const ph = 8, px = L * 0.42, pz = W * 0.35;
+    for (const sx of [-1, 1]) for (const sz of [-1, 1])
+      box(0.5, ph, 0.5, pgMat, sx * px * 0.8, deckTop + ph/2, -W/2 + (sz === -1 ? 0.6 : pz));
+    box(px * 1.85, 0.5, 0.3, pgMat, 0, deckTop + ph + 0.2, -W/2 + 0.6);
+    box(px * 1.85, 0.5, 0.3, pgMat, 0, deckTop + ph + 0.2, -W/2 + pz);
+    for (let rx = -px * 0.85; rx <= px * 0.85; rx += 1.1)
+      box(0.18, 0.35, pz + 1.4, pgMat, rx, deckTop + ph + 0.55, -W/2 + pz/2 + 0.3);
+  }
+
+  // built-in bench
+  if (feats.bench) {
+    box(Math.min(6, L * 0.5), 0.25, 1.4, up ? PAL.composite() : PAL.woodPT(), -L/4, deckTop + 1.35, -W/2 + 1.0);
+    box(Math.min(6, L * 0.5), 1.2, 0.2, up ? PAL.composite() : PAL.woodPT(), -L/4, deckTop + 0.75, -W/2 + 0.4);
+  }
+  // hot tub
+  if (feats.hottub) {
+    cyl(2.6, 2.6, 1.1, mat(0x4a4f57, 0.6), L/4, deckTop + 0.55, -W/6);
+    cyl(2.3, 2.3, 0.15, new THREE.MeshStandardMaterial({ color: 0x3ba7d9, roughness: 0.1 }), L/4, deckTop + 1.12, -W/6);
+  }
+
+  scaleFigure(-L/2 - 3, W/2 + 2);
+  label(`${state.L}' long`, 0, 1.2, W/2 + 3.5);
+  label(`${state.W}' wide`, L/2 + 4, 1.2, 0);
+  return { focusY: deckTop + 2, size: Math.max(L, W) + (feats.stairs ? 8 : 4) };
+}
+
+function buildShedLike(tier, kind) {
+  const { L, W, H, feats } = state;
+  const up = tier === "up";
+  const wallMat = up ? PAL.sidingUp() : PAL.siding();
+  const roofMat = up ? PAL.shingleUp() : PAL.shingleA();
+  const trim = PAL.trimWhite();
+  const wallH = Math.max(H, 7);
+  const t = 0.4; // wall thickness
+
+  // slab / skids
+  if (kind === "shed" && !up) box(L, 0.5, W, PAL.woodPT(), 0, 0.25, 0);
+  else box(L + 0.4, 0.5, W + 0.4, PAL.concrete(), 0, 0.25, 0);
+
+  // walls (four slabs)
+  box(L, wallH, t, wallMat, 0, 0.5 + wallH/2, -W/2 + t/2);
+  box(L, wallH, t, wallMat, 0, 0.5 + wallH/2, W/2 - t/2);
+  box(t, wallH, W, wallMat, -L/2 + t/2, 0.5 + wallH/2, 0);
+  box(t, wallH, W, wallMat, L/2 - t/2, 0.5 + wallH/2, 0);
+  // corner trim (upgraded)
+  if (up) for (const sx of [-1, 1]) for (const sz of [-1, 1])
+    box(0.5, wallH, 0.5, trim, sx * (L/2 - 0.2), 0.5 + wallH/2, sz * (W/2 - 0.2));
+
+  // gable ends + roof (ridge along X)
+  const peak = W * 0.3;
+  prism(W, peak, L, wallMat, 0, 0.5 + wallH, 0).rotation.y = Math.PI / 2;
+  const ov = up ? 1.0 : 0.25;
+  const roof = prism(W + ov * 2, peak + 0.35, L + ov * 2, roofMat, 0, 0.5 + wallH + 0.02, 0);
+  roof.rotation.y = Math.PI / 2;
+
+  // cupola (upgraded shed)
+  if (up && kind === "shed") {
+    box(1.6, 1.4, 1.6, trim, 0, 0.5 + wallH + peak + 0.9, 0);
+    prism(2.0, 0.9, 2.0, roofMat, 0, 0.5 + wallH + peak + 1.6, 0);
+  }
+
+  const frontZ = W/2;
+  if (kind === "garage") {
+    // garage door on front
+    const gw = Math.min(L - 3, 9), gh = Math.min(wallH - 0.8, 7);
+    const doorMat = up ? mat(0x6e5238, 0.6) : mat(0xdedbd2, 0.7);
+    box(gw, gh, 0.15, doorMat, 0, 0.5 + gh/2, frontZ + 0.05);
+    for (let i = 1; i < 4; i++) box(gw, 0.06, 0.06, mat(0x8a8a85), 0, 0.5 + gh * i/4, frontZ + 0.15);
+    if (up) { // carriage windows + hardware
+      for (let i = -1; i <= 1; i++) box(gw/4, 0.7, 0.08, PAL.glass(), i * gw/3.2, 0.5 + gh - 0.7, frontZ + 0.16);
+      box(gw + 0.5, 0.35, 0.12, trim, 0, 0.5 + gh + 0.2, frontZ + 0.1);
+      // lights beside door
+      for (const s of [-1, 1]) box(0.3, 0.6, 0.3, feats.lighting ? PAL.light() : PAL.metal(), s * (gw/2 + 0.8), 0.5 + gh + 0.1, frontZ + 0.2);
+      // side service door
+      box(2.6, 5.6, 0.15, mat(0x5b6570), L/2 + 0.02, 0.5 + 2.8, W/4).rotation.y = Math.PI/2;
+    }
+    // window
+    box(2.4, 2.2, 0.15, PAL.glass(), -L/2 - 0.02, 0.5 + wallH * 0.55, 0).rotation.y = Math.PI/2;
+  } else {
+    // shed / addition doors+windows on front
+    const doorW = up && kind === "shed" ? 4.6 : 2.8;
+    const doorMat = up ? mat(0x7a3b2e, 0.6) : mat(0x8a6a4a, 0.7);
+    if (kind === "addition" && up) {
+      // french door
+      box(4.8, 6.6, 0.15, PAL.glass(), 0, 0.5 + 3.3, frontZ + 0.06);
+      box(0.15, 6.6, 0.2, trim, 0, 0.5 + 3.3, frontZ + 0.1);
+      box(5.2, 0.3, 0.2, trim, 0, 0.5 + 6.75, frontZ + 0.1);
+    } else {
+      box(doorW, 5.9, 0.15, doorMat, 0, 0.5 + 2.95, frontZ + 0.06);
+      if (up && kind === "shed") box(0.1, 5.9, 0.2, trim, 0, 0.5 + 2.95, frontZ + 0.12); // double door split
+    }
+    if (up && kind === "shed") { // ramp
+      const ramp = box(4.2, 0.18, 2.6, PAL.woodPT(), 0, 0.35, frontZ + 1.5);
+      ramp.rotation.x = 0.18;
+    }
+    // windows
+    const winCount = kind === "addition" ? Math.max(2, Math.round(L / 6)) : (up ? 2 : 1);
+    const winW = up ? 2.6 : 2.0, winH = up ? 2.8 : 2.2;
+    for (let i = 0; i < winCount; i++) {
+      let px;
+      if (kind === "addition") {
+        px = (i - (winCount - 1)/2) * (L / (winCount + 0.5));
+      } else {
+        px = winCount === 1 ? -L/4 - 0.5 : (i === 0 ? -L/4 - 0.5 : L/4 + 0.5);
+        if (Math.abs(px) < doorW/2 + winW/2 + 0.3) continue; // skip if it would overlap the door
+      }
+      box(winW, winH, 0.15, PAL.glass(), px, 0.5 + wallH * 0.58, frontZ + 0.06);
+      if (up) {
+        box(winW + 0.35, winH + 0.35, 0.1, trim, px, 0.5 + wallH * 0.58, frontZ + 0.04);
+        if (kind === "shed") box(winW + 0.2, 0.4, 0.5, mat(0x7a5a3a), px, 0.5 + wallH * 0.58 - winH/2 - 0.25, frontZ + 0.3);
+      }
+    }
+    // big side windows for upgraded addition
+    if (kind === "addition" && up) {
+      for (const s of [-1, 1]) {
+        const wm = box(3.2, 3.4, 0.15, PAL.glass(), s * (L/2 + 0.02), 0.5 + wallH * 0.55, -W/6);
+        wm.rotation.y = Math.PI/2;
+      }
+    }
+  }
+  if (feats.skylight) {
+    const sk = box(2.2, 0.12, 2.8, PAL.glass(), L/5, 0.5 + wallH + peak * 0.55, W/5);
+    sk.rotation.x = -Math.atan(peak / (W/2));
+  }
+
+  scaleFigure(L/2 + 3, W/2 + 2);
+  label(`${state.L}' × ${state.W}'`, 0, 1.2, W/2 + 3.5);
+  return { focusY: (wallH + peak) / 2 + 1, size: Math.max(L, W) + 6 };
+}
+
+function buildFence(tier) {
+  const { L, H, feats } = state;
+  const up = tier === "up";
+  const wood = up ? mat(0x9a6b42) : PAL.woodPT();
+  const fh = Math.max(H, 3);
+  const postSpacing = 8;
+  const nPanels = Math.max(1, Math.round(L / postSpacing));
+  const panelLen = L / nPanels;
+  const gatePanel = feats.gate ? Math.floor(nPanels / 2) : -1;
+
+  for (let i = 0; i <= nPanels; i++) {
+    const x = -L/2 + i * panelLen;
+    box(0.4, fh + 0.3, 0.4, wood, x, (fh + 0.3)/2, 0);
+    if (up) {
+      box(0.55, 0.15, 0.55, mat(0x6b4a2f), x, fh + 0.38, 0);           // post cap
+      if (feats.lighting) box(0.25, 0.18, 0.25, PAL.light(), x, fh + 0.54, 0);  // solar light
+    }
+  }
+  for (let i = 0; i < nPanels; i++) {
+    const cx = -L/2 + (i + 0.5) * panelLen;
+    const isGate = i === gatePanel;
+    const bodyH = up ? fh * 0.78 : fh * 0.92;
+    // rails
+    box(panelLen - 0.4, 0.25, 0.15, wood, cx, bodyH - 0.2, 0);
+    box(panelLen - 0.4, 0.25, 0.15, wood, cx, 0.5, 0);
+    // pickets
+    const pk = 0.46, gapP = isGate ? 0.1 : 0.06;
+    for (let px = cx - panelLen/2 + 0.45; px < cx + panelLen/2 - 0.25; px += pk + gapP) {
+      box(pk, isGate ? bodyH * 0.9 : bodyH, 0.1, isGate ? mat(0x7d5735) : wood, px + pk/2, (isGate ? bodyH * 0.9 : bodyH)/2 + 0.08, 0.08);
+    }
+    if (isGate) { // Z-brace
+      const brace = box(panelLen * 1.1, 0.3, 0.08, mat(0x6b4a2f), cx, bodyH/2, 0.16);
+      brace.rotation.z = Math.atan(bodyH / panelLen);
+    }
+    // lattice top (upgraded)
+    if (up && !isGate) {
+      const latH = fh - bodyH - 0.15;
+      const lg = new THREE.Group();
+      for (let lx = -panelLen/2 + 0.5; lx < panelLen/2; lx += 0.8) {
+        const s1 = box(0.08, latH * 1.5, 0.05, wood, lx, 0, 0, lg); s1.rotation.z = 0.8;
+        const s2 = box(0.08, latH * 1.5, 0.05, wood, lx, 0, 0.06, lg); s2.rotation.z = -0.8;
+      }
+      lg.position.set(cx, bodyH + latH/2 + 0.1, 0);
+      // clip look: frame it
+      box(panelLen - 0.4, 0.15, 0.12, wood, cx, fh - 0.05, 0);
+      buildGroup.add(lg);
+    }
+  }
+
+  scaleFigure(-L/2 - 3, 3);
+  label(`${state.L}' run`, 0, 1.2, 4);
+  label(`${state.H}' tall`, -L/2 - 2, fh + 1, 0, 0.8);
+  return { focusY: fh/2 + 1, size: L * 0.75 + 8 };
+}
+
+function buildPatio(tier) {
+  const { L, W, feats } = state;
+  const up = tier === "up";
+  const slabMat = up ? PAL.stamped() : PAL.concrete();
+
+  box(L, 0.35, W, slabMat, 0, 0.18, 0);
+  if (up) {
+    // decorative border band
+    const bMat = mat(0x7d6650, 0.9);
+    box(L + 0.6, 0.37, 0.8, bMat, 0, 0.19, W/2 + 0.1);
+    box(L + 0.6, 0.37, 0.8, bMat, 0, 0.19, -W/2 - 0.1);
+    box(0.8, 0.37, W + 0.6, bMat, L/2 + 0.1, 0.19, 0);
+    box(0.8, 0.37, W + 0.6, bMat, -L/2 - 0.1, 0.19, 0);
+    // stamped joint lines
+    const lineMat = mat(0x8f7a62);
+    for (let x = -L/2 + L/4; x < L/2; x += L/4) box(0.08, 0.372, W, lineMat, x, 0.19, 0);
+    for (let z = -W/2 + W/4; z < W/2; z += W/4) box(L, 0.372, 0.08, lineMat, 0, 0.19, z);
+    // seating wall along back edge
+    const swMat = mat(0x9b8b76, 0.95);
+    box(Math.min(L * 0.7, L - 2), 1.6, 1.1, swMat, 0, 0.8 + 0.35, -W/2 + 0.8);
+    box(Math.min(L * 0.7, L - 2) + 0.3, 0.25, 1.3, mat(0xb7a890, 0.9), 0, 1.6 + 0.5, -W/2 + 0.8);
+  } else {
+    // control joints
+    const lineMat = mat(0xa09d97);
+    for (let x = -L/2 + L/3; x < L/2; x += L/3) box(0.06, 0.36, W, lineMat, x, 0.18, 0);
+  }
+
+  if (feats.pergola && up) {
+    const pgMat = PAL.woodDark();
+    const ph = 8.5, spanX = Math.min(L * 0.8, 14), spanZ = Math.min(W * 0.8, 12);
+    for (const sx of [-1, 1]) for (const sz of [-1, 1])
+      box(0.55, ph, 0.55, pgMat, sx * spanX/2, 0.35 + ph/2, sz * spanZ/2);
+    box(spanX + 1.6, 0.55, 0.35, pgMat, 0, 0.35 + ph + 0.25, -spanZ/2);
+    box(spanX + 1.6, 0.55, 0.35, pgMat, 0, 0.35 + ph + 0.25, spanZ/2);
+    for (let rx = -spanX/2; rx <= spanX/2; rx += 1.2)
+      box(0.2, 0.4, spanZ + 1.6, pgMat, rx, 0.35 + ph + 0.6, 0);
+    if (feats.lighting) for (let rx = -spanX/2 + 1; rx < spanX/2; rx += 2.4)
+      box(0.18, 0.18, 0.18, PAL.light(), rx, 0.35 + ph - 0.2, 0);
+  }
+  if (feats.firepit) {
+    cyl(1.7, 1.9, 1.1, mat(0x83766a, 0.95), L/5, 0.35 + 0.55, W/6, buildGroup, 24);
+    cyl(1.3, 1.3, 0.2, new THREE.MeshStandardMaterial({ color: 0xff7722, emissive: 0xff5500, emissiveIntensity: up ? 1.6 : 1.2 }), L/5, 0.35 + 1.05, W/6);
+  }
+  if (feats.bench && !up) {
+    box(Math.min(5, L * 0.4), 0.25, 1.2, PAL.woodPT(), -L/4, 1.35, -W/2 + 1);
+    box(0.25, 1.25, 1.2, PAL.woodPT(), -L/4 - Math.min(5, L*0.4)/2 + 0.2, 0.62 + 0.35, -W/2 + 1);
+    box(0.25, 1.25, 1.2, PAL.woodPT(), -L/4 + Math.min(5, L*0.4)/2 - 0.2, 0.62 + 0.35, -W/2 + 1);
+  }
+  if (feats.hottub) {
+    cyl(2.6, 2.6, 1.15, mat(0x4a4f57, 0.6), -L/4, 0.35 + 0.57, W/5);
+    cyl(2.3, 2.3, 0.15, new THREE.MeshStandardMaterial({ color: 0x3ba7d9, roughness: 0.1 }), -L/4, 0.35 + 1.17, W/5);
+  }
+
+  scaleFigure(L/2 + 3, W/2 + 2);
+  label(`${state.L}' × ${state.W}'`, 0, 1.2, W/2 + 3.5);
+  return { focusY: feats.pergola && up ? 4.5 : 1.5, size: Math.max(L, W) + 6 };
+}
+
+const BUILDERS = {
+  deck: buildDeck,
+  shed: t => buildShedLike(t, "shed"),
+  garage: t => buildShedLike(t, "garage"),
+  addition: t => buildShedLike(t, "addition"),
+  fence: buildFence,
+  patio: buildPatio
+};
+
+/* ============================================================
+   GENERATE + UI GLUE
+   ============================================================ */
+
+function rebuild3D() {
+  scene.remove(buildGroup);
+  buildGroup.traverse(o => {
+    if (o.geometry) o.geometry.dispose();
+    if (o.material) { const ms = Array.isArray(o.material) ? o.material : [o.material]; ms.forEach(m => { if (m.map) m.map.dispose(); m.dispose(); }); }
+  });
+  buildGroup = new THREE.Group();
+  scene.add(buildGroup);
+
+  const info = BUILDERS[state.type](state.tier);
+  orbit.target.set(0, Math.min(info.focusY, 8), 0);
+  orbit.dist = Math.max(18, info.size * 1.7);
+  applyCamera();
+}
+
+function generate() {
+  state.name = $("inName").value.trim();
+  state.L = Math.max(1, parseFloat($("inL").value) || 10);
+  state.W = Math.max(1, parseFloat($("inW").value) || 10);
+  state.H = Math.max(0, parseFloat($("inH").value) || 0);
+  state.desc = $("inDesc").value;
+  state.rate = Math.max(1, parseFloat($("inRate").value) || TYPES[state.type].rate);
+  state.feats = detectFeatures();
+  state.generated = true;
+
+  $("emptyMsg").style.display = "none";
+  $("overlayTop").style.display = "flex";
+  $("compare").style.display = "flex";
+  $("disclaimer").style.display = "block";
+
+  rebuild3D();
+  renderCards();
+  updateBadge();
+  buildPrintSheet();
+}
+
+function setTier(tier) {
+  state.tier = tier;
+  $("segBasic").classList.toggle("active", tier === "basic");
+  $("segUp").classList.toggle("active", tier === "up");
+  $("cardBasic").classList.toggle("selected", tier === "basic");
+  $("cardUp").classList.toggle("selected", tier === "up");
+  if (state.generated) { rebuild3D(); updateBadge(); }
+}
+
+function updateBadge() {
+  const p = priceOut(state.tier);
+  $("badgeTier").textContent = state.tier === "up" ? "Upgraded build" : "Standard build";
+  $("badgePrice").textContent = `${fmt$(p.lo)} – ${fmt$(p.hi)}`;
+}
+
+function renderCards() {
+  const t = TYPES[state.type];
+  for (const tier of ["basic", "up"]) {
+    const p = priceOut(tier);
+    const listEl = $(tier === "up" ? "listUp" : "listBasic");
+    const items = t[tier].map(f => `<li>${f}</li>`);
+    for (const it of p.items) items.push(`<li class="addon">${it.label} — ${fmt$(it.cost)}</li>`);
+    for (const k of Object.keys(state.feats)) {
+      if (FEATURES[k].cost[tier === "up" ? 1 : 0] === 0 && FEATURES[k].cost[0] === 0 && FEATURES[k].cost[1] === 0)
+        items.push(`<li class="addon">${FEATURES[k].label}</li>`);
+    }
+    listEl.innerHTML = items.join("");
+    $(tier === "up" ? "priceUp" : "priceBasic").textContent = fmt$(p.total);
+    $(tier === "up" ? "rangeUp" : "rangeBasic").textContent =
+      `Estimated range ${fmt$(p.lo)} – ${fmt$(p.hi)} · ${t.unit === "linear ft" ? state.L + " linear ft" : (state.L * state.W).toLocaleString() + " sq ft"}`;
+  }
+  const upP = priceOut("up"), baP = priceOut("basic");
+  $("cardUp").querySelector(".tier").innerHTML = `⭐ UPGRADED <span style="font-weight:400;color:var(--muted);font-size:11px">+${fmt$(upP.total - baP.total)} more</span>`;
+}
+
+function buildPrintSheet() {
+  const t = TYPES[state.type];
+  const ba = priceOut("basic"), up = priceOut("up");
+  const li = arr => arr.map(x => `<li>${x}</li>`).join("");
+  const addons = tier => priceOut(tier).items.map(i => `<li><b>${i.label}</b> — ${fmt$(i.cost)}</li>`).join("");
+  $("printSheet").innerHTML = `
+    <h1>${state.name || t.name + " Project"}</h1>
+    <div class="psub">${t.name} · ${t.unit === "linear ft" ? state.L + " linear ft" : state.L + "' × " + state.W + "'"} · prepared ${new Date().toLocaleDateString()}</div>
+    <img id="printImg" alt="3D preview">
+    <div class="pcols">
+      <div class="pcard">
+        <h3>Standard Build</h3>
+        <div class="pp">${fmt$(ba.lo)} – ${fmt$(ba.hi)}</div>
+        <ul>${li(t.basic)}${addons("basic")}</ul>
+      </div>
+      <div class="pcard up">
+        <h3>⭐ Upgraded Build <span style="font-size:11px;color:#e07000">+${fmt$(up.total - ba.total)}</span></h3>
+        <div class="pp">${fmt$(up.lo)} – ${fmt$(up.hi)}</div>
+        <ul>${li(t.up)}${addons("up")}</ul>
+      </div>
+    </div>
+    <div class="pdisc">Estimates are for planning purposes only and are not a quote. Final pricing depends on site conditions, material selections, permits and local building codes. ${state.desc ? "Client notes: “" + state.desc.replace(/</g, "&lt;") + "”" : ""}</div>
+  `;
+}
+
+/* Buttons */
+$("btnGen").addEventListener("click", generate);
+$("segBasic").addEventListener("click", () => setTier("basic"));
+$("segUp").addEventListener("click", () => setTier("up"));
+document.querySelectorAll(".viewbtn").forEach(b => b.addEventListener("click", () => setTier(b.dataset.tier)));
+$("btnSpin").addEventListener("click", () => {
+  state.autoSpin = !state.autoSpin;
+  $("btnSpin").style.borderColor = state.autoSpin ? "var(--accent)" : "var(--line)";
+});
+$("btnShot").addEventListener("click", () => {
+  renderer.render(scene, camera);
+  const a = document.createElement("a");
+  a.download = (state.name || "preview").replace(/[^a-z0-9]+/gi, "-").toLowerCase() + "-" + state.tier + ".png";
+  a.href = renderer.domElement.toDataURL("image/png");
+  a.click();
+});
+$("btnPrint").addEventListener("click", () => {
+  if (!state.generated) { alert("Generate a preview first."); return; }
+  buildPrintSheet();
+  renderer.render(scene, camera);
+  document.getElementById("printImg").src = renderer.domElement.toDataURL("image/png");
+  setTimeout(() => window.print(), 60);
+});
+
+/* Enter key on inputs generates */
+document.querySelectorAll("aside input").forEach(el =>
+  el.addEventListener("keydown", e => { if (e.key === "Enter") generate(); })
+);
+
+applyTypeToForm();
+</script>
+</body>
+</html>
