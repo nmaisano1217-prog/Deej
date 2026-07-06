@@ -55,6 +55,8 @@
   }
   .typegrid button .ic{font-size:18px;}
   .typegrid button.active{border-color:var(--accent); background:#2e2418; color:var(--accent2);}
+  .typecat{grid-column:1/-1; font-size:10.5px; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin:8px 0 1px; font-weight:700;}
+  .typecat:first-child{margin-top:0;}
   .chips{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; min-height:10px;}
   .chip{
     font-size:11.5px; background:#243422; color:var(--good); border:1px solid #33513a;
@@ -184,14 +186,7 @@
     <input type="text" id="inName" placeholder="e.g. Johnson backyard deck">
 
     <h2>What are you building?</h2>
-    <div class="typegrid" id="typeGrid">
-      <button data-type="deck" class="active"><span class="ic">🪵</span>Deck</button>
-      <button data-type="shed"><span class="ic">🏠</span>Shed</button>
-      <button data-type="garage"><span class="ic">🚗</span>Garage</button>
-      <button data-type="addition"><span class="ic">🧱</span>Room Addition</button>
-      <button data-type="fence"><span class="ic">🚧</span>Fence</button>
-      <button data-type="patio"><span class="ic">⛱️</span>Patio</button>
-    </div>
+    <div class="typegrid" id="typeGrid"></div>
 
     <h2>Measurements (feet)</h2>
     <div class="row">
@@ -282,56 +277,166 @@
    CONFIG — project types, default rates, features, upgrades
    ============================================================ */
 
+const areaQty = s => s.L * s.W;
+const areaMeasure = s => `${s.L}' × ${s.W}' · ${(s.L * s.W).toLocaleString()} sq ft`;
+
 const TYPES = {
-  deck: {
-    name: "Deck", unit: "sq ft", rate: 40, upMult: 1.55,
-    labels: { L: "Length", W: "Width", H: "Height off ground" },
-    basic: ["Pressure-treated lumber decking", "Concrete pier footings", "Standard wood railing (if over 30\")", "Galvanized hardware"],
-    up: ["Composite decking — no staining, 25-yr warranty", "Black aluminum balusters w/ wood top rail", "Post caps + fascia trim wrap", "Hidden fasteners (no visible screws)"]
-  },
-  shed: {
-    name: "Shed", unit: "sq ft", rate: 55, upMult: 1.5,
-    labels: { L: "Length", W: "Width", H: "Wall height" },
-    basic: ["Framed walls on treated skids", "Asphalt shingle gable roof", "Single door + one window", "Exterior-grade siding, painted"],
-    up: ["Architectural shingles + roof overhangs", "Double doors with ramp", "Two windows w/ trim & flower boxes", "Cupola + upgraded siding color"]
-  },
-  garage: {
-    name: "Garage", unit: "sq ft", rate: 70, upMult: 1.45,
-    labels: { L: "Length", W: "Width", H: "Wall height" },
-    basic: ["Slab-on-grade concrete floor", "Standard sectional garage door", "Asphalt shingle roof", "One service window"],
-    up: ["Carriage-style insulated door w/ windows", "Side entry door + extra window", "Architectural shingles + overhangs", "Exterior lighting package"]
-  },
+  /* ---------- BIG STRUCTURES ---------- */
   addition: {
-    name: "Room Addition", unit: "sq ft", rate: 185, upMult: 1.4,
-    labels: { L: "Length", W: "Width", H: "Wall height" },
+    name: "Room Addition", cat: "Structures", unit: "sq ft", rate: 185, upMult: 1.4,
+    defL: 20, defW: 14, defH: 9, labels: { L: "Length", W: "Width", H: "Wall height" },
+    qty: areaQty, measure: areaMeasure,
     basic: ["Full foundation + framed walls", "Standard vinyl windows", "Siding matched to house", "Electrical + insulation to code"],
     up: ["Oversized windows for more light", "French patio door", "Upgraded trim package inside & out", "Premium siding + architectural roof"]
   },
+  sunroom: {
+    name: "Sunroom", cat: "Structures", unit: "sq ft", rate: 200, upMult: 1.45,
+    defL: 16, defW: 12, defH: 9, labels: { L: "Length", W: "Depth", H: "Wall height" },
+    qty: areaQty, measure: areaMeasure,
+    basic: ["Insulated slab + knee walls", "Vinyl-framed glass panels", "Sliding patio door", "Shingled roof w/ one skylight"],
+    up: ["Floor-to-ceiling glass", "Bronze/black aluminum frames", "Insulated glass roof panels", "Screened operable windows"]
+  },
+  garage: {
+    name: "Garage", cat: "Structures", unit: "sq ft", rate: 70, upMult: 1.45,
+    defL: 24, defW: 24, defH: 9, labels: { L: "Length", W: "Width", H: "Wall height" },
+    qty: areaQty, measure: areaMeasure,
+    basic: ["Slab-on-grade concrete floor", "Standard sectional garage door", "Asphalt shingle roof", "One service window"],
+    up: ["Carriage-style insulated door w/ windows", "Side entry door + extra window", "Architectural shingles + overhangs", "Exterior lighting package"]
+  },
+  barn: {
+    name: "Pole Barn", cat: "Structures", unit: "sq ft", rate: 45, upMult: 1.4,
+    defL: 40, defW: 30, defH: 12, labels: { L: "Length", W: "Width", H: "Wall height" },
+    qty: areaQty, measure: areaMeasure,
+    basic: ["Post-frame construction on piers", "Metal or board siding", "Gambrel roof", "Large sliding barn door"],
+    up: ["Insulated walls + steel roof", "Cupola + weathervane", "Extra windows & side door", "Gutters + trim package"]
+  },
+  shed: {
+    name: "Shed", cat: "Structures", unit: "sq ft", rate: 55, upMult: 1.5,
+    defL: 12, defW: 10, defH: 8, labels: { L: "Length", W: "Width", H: "Wall height" },
+    qty: areaQty, measure: areaMeasure,
+    basic: ["Framed walls on treated skids", "Asphalt shingle gable roof", "Single door + one window", "Exterior-grade siding, painted"],
+    up: ["Architectural shingles + roof overhangs", "Double doors with ramp", "Two windows w/ trim & flower boxes", "Cupola + upgraded siding color"]
+  },
+
+  /* ---------- OUTDOOR LIVING ---------- */
+  deck: {
+    name: "Deck", cat: "Outdoor Living", unit: "sq ft", rate: 40, upMult: 1.55,
+    defL: 16, defW: 12, defH: 3, labels: { L: "Length", W: "Width", H: "Height off ground" },
+    qty: areaQty, measure: areaMeasure,
+    basic: ["Pressure-treated pine decking", "Concrete pier footings", "Standard wood railing (if over 30\")", "Galvanized hardware"],
+    up: ["Composite decking — no staining, 25-yr warranty", "Black aluminum balusters w/ wood top rail", "Post caps + fascia trim wrap", "Hidden fasteners (no visible screws)"]
+  },
+  porch: {
+    name: "Covered Porch", cat: "Outdoor Living", unit: "sq ft", rate: 110, upMult: 1.45,
+    defL: 20, defW: 8, defH: 2, labels: { L: "Width (along house)", W: "Depth", H: "Floor height" },
+    qty: areaQty, measure: areaMeasure,
+    basic: ["Pressure-treated posts & framing", "Tongue-and-groove or PT floor", "Shingled shed roof tied to house", "Wood railing & steps"],
+    up: ["Tapered wrapped columns", "Beadboard ceiling", "Composite floor + rails", "Recessed lighting + fans rough-in"]
+  },
+  patio: {
+    name: "Patio", cat: "Outdoor Living", unit: "sq ft", rate: 14, upMult: 1.85,
+    defL: 20, defW: 16, defH: 0, labels: { L: "Length", W: "Width", H: null },
+    qty: areaQty, measure: areaMeasure,
+    basic: ["Broom-finish concrete slab", "Compacted gravel base", "Control joints to prevent cracking", "Standard gray finish"],
+    up: ["Stamped & colored concrete finish", "Decorative border band", "Seating wall along one edge", "Sealed finish — resists stains"]
+  },
+  pergola: {
+    name: "Pergola", cat: "Outdoor Living", unit: "sq ft", rate: 35, upMult: 1.5,
+    defL: 12, defW: 10, defH: 9, labels: { L: "Length", W: "Width", H: "Height" },
+    qty: areaQty, measure: areaMeasure,
+    basic: ["Pressure-treated posts & beams", "Standard rafter top", "Concrete footings", "Galvanized hardware"],
+    up: ["Cedar timbers, stained", "Shade slats + decorative rafter tails", "Stone-wrapped post bases", "Wired for string lights"]
+  },
+  gazebo: {
+    name: "Gazebo", cat: "Outdoor Living", unit: "sq ft", rate: 90, upMult: 1.5,
+    defL: 12, defW: 12, defH: 8, labels: { L: "Diameter", W: null, H: "Post height" },
+    qty: s => 0.83 * s.L * s.L, measure: s => `${s.L}' across · ${Math.round(0.83 * s.L * s.L).toLocaleString()} sq ft`,
+    basic: ["Octagonal PT frame & floor", "Turned wood railing", "Shingled roof", "Concrete pad footings"],
+    up: ["Cedar posts & railing", "Cupola with vents", "Built-in perimeter benches", "Screened option ready"]
+  },
+  carport: {
+    name: "Carport", cat: "Outdoor Living", unit: "sq ft", rate: 22, upMult: 1.5,
+    defL: 20, defW: 20, defH: 9, labels: { L: "Length", W: "Width", H: "Post height" },
+    qty: areaQty, measure: areaMeasure,
+    basic: ["Concrete pad + post footings", "Gable roof, shingled", "Open sides", "PT posts & beams"],
+    up: ["One enclosed wall + gable infill", "Steel roof + gutters", "Exterior lights", "Upgraded posts & trim"]
+  },
+
+  /* ---------- GROUNDWORK ---------- */
+  driveway: {
+    name: "Driveway", cat: "Groundwork", unit: "sq ft", rate: 12, upMult: 1.7,
+    defL: 20, defW: 20, defH: 0, labels: { L: "Length", W: "Width", H: null },
+    qty: areaQty, measure: areaMeasure,
+    basic: ["4\" reinforced concrete slab", "Compacted gravel base", "Control joints", "Broom finish"],
+    up: ["Paver or stamped finish", "Soldier-course border", "Sealed surface", "Edge lighting ready"]
+  },
+  walkway: {
+    name: "Walkway", cat: "Groundwork", unit: "sq ft", rate: 16, upMult: 1.6,
+    defL: 24, defW: 3, defH: 0, labels: { L: "Length", W: "Width", H: null },
+    qty: areaQty, measure: areaMeasure,
+    basic: ["Poured concrete path", "Gravel base", "Control joints", "Broom finish"],
+    up: ["Paver path with border", "Sand-set on compacted base", "Low-voltage path lights", "Sealed finish"]
+  },
+  retainingwall: {
+    name: "Retaining Wall", cat: "Groundwork", unit: "face sq ft", rate: 40, upMult: 1.45,
+    defL: 40, defW: null, defH: 3, labels: { L: "Length", W: null, H: "Wall height" },
+    qty: s => s.L * s.H, measure: s => `${s.L}' long × ${s.H}' tall · ${Math.round(s.L * s.H).toLocaleString()} face sq ft`,
+    basic: ["Segmental block, dry-stacked", "Gravel base + drainage stone", "Compacted backfill", "Standard gray block"],
+    up: ["Premium tumbled block", "Capstones + adhesive", "Geogrid reinforcement", "Integrated steps or lighting"]
+  },
   fence: {
-    name: "Fence", unit: "linear ft", rate: 32, upMult: 1.6,
-    labels: { L: "Total length", W: null, H: "Fence height" },
+    name: "Fence", cat: "Groundwork", unit: "linear ft", rate: 32, upMult: 1.6,
+    defL: 60, defW: null, defH: 6, labels: { L: "Total length", W: null, H: "Fence height" },
+    qty: s => s.L * Math.max(0.7, s.H / 6), measure: s => `${s.L}' run × ${s.H}' tall`,
     basic: ["Pressure-treated posts set in concrete", "Standard picket panels", "Galvanized fasteners", "Posts every 8 ft"],
     up: ["Cedar-tone stained boards", "Decorative lattice top", "Solar post cap lights", "Premium post caps"]
   },
-  patio: {
-    name: "Patio", unit: "sq ft", rate: 14, upMult: 1.85,
-    labels: { L: "Length", W: "Width", H: null },
-    basic: ["Broom-finish concrete slab", "Compacted gravel base", "Control joints to prevent cracking", "Standard gray finish"],
-    up: ["Stamped & colored concrete finish", "Decorative border band", "Seating wall along one edge", "Sealed finish — resists stains"]
+
+  /* ---------- SMALL PROJECTS ---------- */
+  stairs: {
+    name: "Exterior Stairs", cat: "Small Projects", unit: "sq ft", rate: 70, upMult: 1.5,
+    defL: 4, defW: null, defH: 4, labels: { L: "Width", W: null, H: "Total rise" },
+    qty: s => Math.max(s.L, 3) * Math.max(s.H, 1), measure: s => `${s.L}' wide × ${s.H}' rise`,
+    basic: ["PT stringers, treads & risers", "Concrete landing pad", "Wood handrail one side", "Code-compliant rise/run"],
+    up: ["Composite treads", "Aluminum rail both sides", "Recessed step lights", "Wider commercial-grade run"]
+  },
+  ramp: {
+    name: "Wheelchair Ramp", cat: "Small Projects", unit: "linear ft", rate: 55, upMult: 1.45,
+    defL: 4, defW: null, defH: 3, labels: { L: "Width", W: null, H: "Rise needed" },
+    qty: s => Math.max(s.H * 12, 6), measure: s => `${s.H}' rise · ${Math.round(Math.max(s.H * 12, 6))}' of ramp (1:12)`,
+    basic: ["ADA 1:12 slope", "PT framing & decking", "Handrails both sides", "Level landing at top"],
+    up: ["Composite non-slip deck", "Aluminum ADA handrails", "Switchback with mid-landing", "Powder-coated finish"]
+  },
+  planter: {
+    name: "Raised Garden Beds", cat: "Small Projects", unit: "sq ft", rate: 30, upMult: 1.55,
+    defL: 8, defW: 4, defH: 2, labels: { L: "Length", W: "Width", H: "Bed height" },
+    qty: areaQty, measure: areaMeasure,
+    basic: ["Pressure-treated 2×", "Corner bracing", "Landscape-fabric liner", "Filled with garden soil"],
+    up: ["Cedar boards — rot-resistant", "Mitered cap rail to sit on", "Built-in trellis", "Drip-irrigation ready"]
   }
+};
+
+/* Category display order + labels for the picker */
+const CATS = ["Structures", "Outdoor Living", "Groundwork", "Small Projects"];
+const TYPE_ICONS = {
+  addition: "🧱", sunroom: "🌇", garage: "🚗", barn: "🚜", shed: "🏠",
+  deck: "🪵", porch: "🏡", patio: "⛱️", pergola: "🏛️", gazebo: "🎪", carport: "🚙",
+  driveway: "🛣️", walkway: "🚶", retainingwall: "🪨", fence: "🚧",
+  stairs: "🪜", ramp: "♿", planter: "🌱"
 };
 
 /* Features detected from the description. cost = [standard adder, upgraded adder] */
 const FEATURES = {
-  stairs:   { re: /\bstair|\bsteps?\b/i,            label: "Stairs",          cost: [900, 1400],  types: ["deck"] },
-  lighting: { re: /\blight|\bled\b/i,               label: "Lighting",        cost: [450, 950],   types: ["deck","patio","garage","shed","fence","addition"] },
-  pergola:  { re: /pergola|shade structure/i,       label: "Pergola",         cost: [2600, 4200], types: ["deck","patio"] },
-  firepit:  { re: /fire\s?pit/i,                    label: "Fire pit",        cost: [1800, 2600], types: ["patio"] },
+  stairs:   { re: /\bstair|\bsteps?\b/i,            label: "Stairs",          cost: [900, 1400],  types: ["deck","porch"] },
+  lighting: { re: /\blight|\bled\b/i,               label: "Lighting",        cost: [450, 950],   types: ["deck","patio","garage","shed","fence","addition","porch","pergola","gazebo","carport","sunroom","barn","driveway","walkway","stairs","ramp","retainingwall","planter"] },
+  pergola:  { re: /pergola|shade structure/i,       label: "Pergola",         cost: [2600, 4200], types: ["deck","patio","porch"] },
+  firepit:  { re: /fire\s?pit/i,                    label: "Fire pit",        cost: [1800, 2600], types: ["patio","gazebo"] },
   gate:     { re: /\bgate/i,                        label: "Gate",            cost: [350, 600],   types: ["fence"] },
-  bench:    { re: /\bbench|built.?in seat/i,        label: "Built-in bench",  cost: [650, 1100],  types: ["deck","patio"] },
-  hottub:   { re: /hot\s?tub|jacuzzi|\bspa\b/i,     label: "Hot tub (shown for scale — tub by owner)", cost: [0, 0], types: ["deck","patio"] },
-  window:   { re: /window/i,                        label: "Windows noted",   cost: [0, 0],       types: ["shed","garage","addition"] },
-  skylight: { re: /skylight/i,                      label: "Skylight",        cost: [1200, 1900], types: ["addition","garage"] }
+  bench:    { re: /\bbench|built.?in seat/i,        label: "Built-in bench",  cost: [650, 1100],  types: ["deck","patio","gazebo","porch","pergola"] },
+  hottub:   { re: /hot\s?tub|jacuzzi|\bspa\b/i,     label: "Hot tub (shown for scale — tub by owner)", cost: [0, 0], types: ["deck","patio","porch"] },
+  gutters:  { re: /gutter|downspout/i,              label: "Gutters & downspouts", cost: [350, 650], types: ["porch","carport","garage","addition","barn","sunroom","gazebo","shed"] },
+  window:   { re: /window/i,                        label: "Windows noted",   cost: [0, 0],       types: ["shed","garage","addition","sunroom","barn"] },
+  skylight: { re: /skylight/i,                      label: "Skylight",        cost: [1200, 1900], types: ["addition","garage","sunroom","porch"] }
 };
 
 const fmt$ = n => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
@@ -348,6 +453,19 @@ const state = {
 };
 
 const $ = id => document.getElementById(id);
+
+/* Build the grouped project-type picker from config */
+(function buildPicker() {
+  let html = "";
+  for (const cat of CATS) {
+    html += `<div class="typecat">${cat}</div>`;
+    for (const [key, t] of Object.entries(TYPES)) {
+      if (t.cat !== cat) continue;
+      html += `<button data-type="${key}"${key === state.type ? ' class="active"' : ""}><span class="ic">${TYPE_ICONS[key] || "🔨"}</span>${t.name}</button>`;
+    }
+  }
+  $("typeGrid").innerHTML = html;
+})();
 
 $("typeGrid").addEventListener("click", e => {
   const btn = e.target.closest("button[data-type]");
@@ -367,9 +485,10 @@ function applyTypeToForm() {
   if (t.labels.H) $("lblH").textContent = t.labels.H;
   $("lblRate").textContent = `Your base rate ($ per ${t.unit})`;
   if (!state.rateTouched) { state.rate = t.rate; $("inRate").value = t.rate; }
-  // sensible default heights per type
-  const defH = { deck: 3, shed: 8, garage: 9, addition: 9, fence: 6, patio: 0 }[state.type];
-  $("inH").value = defH;
+  // sensible default dimensions per type
+  $("inL").value = t.defL;
+  if (t.labels.W) $("inW").value = t.defW;
+  $("inH").value = t.defH;
   updateChips();
 }
 
@@ -403,9 +522,7 @@ $("inH").addEventListener("input", updateChips);
 
 function priceOut(tier) {
   const t = TYPES[state.type];
-  const qty = t.unit === "linear ft" ? state.L : state.L * state.W;
-  let base = qty * state.rate;
-  if (state.type === "fence") base *= Math.max(0.7, state.H / 6);   // scale with fence height
+  let base = t.qty(state) * state.rate;
   if (tier === "up") base *= t.upMult;
   let total = base;
   const items = [];
@@ -959,13 +1076,402 @@ function buildPatio(tier) {
   return { focusY: feats.pergola && up ? 4.5 : 1.5, size: Math.max(L, W) + 6 };
 }
 
+/* ---------- Extra helpers for the new builders ---------- */
+
+/* Solid gambrel (barn) cross-section extruded along length L */
+function gambrelRoof(W, L, material, baseY) {
+  const h1 = W * 0.30, h2 = h1 + W * 0.15, h3 = h2 + W * 0.12;
+  const s = new THREE.Shape();
+  s.moveTo(-W/2, 0); s.lineTo(-W/2, h1); s.lineTo(-W/4, h2); s.lineTo(0, h3);
+  s.lineTo(W/4, h2); s.lineTo(W/2, h1); s.lineTo(W/2, 0); s.closePath();
+  const geo = new THREE.ExtrudeGeometry(s, { depth: L, bevelEnabled: false });
+  geo.translate(0, 0, -L/2);
+  const m = new THREE.Mesh(geo, material.clone());
+  m.position.y = baseY; m.castShadow = m.receiveShadow = true;
+  buildGroup.add(m);
+  return { mesh: m, peak: h3 };
+}
+
+/* Low-poly car for scale/realism (length runs along Z) */
+function parkedCar(x, z, rotY = 0) {
+  const g = new THREE.Group();
+  const body = mat(0x3a5876, 0.5, 0.3);
+  box(6.4, 1.5, 13.5, body, 0, 1.65, 0, g);
+  box(6.0, 1.7, 7.5, body, 0, 3.0, -0.6, g);
+  box(5.7, 1.3, 6.8, PAL.glass(), 0, 3.1, -0.6, g);
+  const tire = mat(0x141518, 0.85);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1])
+    cyl(1.05, 1.05, 0.55, tire, sx * 3.0, 1.05, sz * 4.0, g).rotation.z = Math.PI/2;
+  g.position.set(x, 0, z); g.rotation.y = rotY;
+  buildGroup.add(g);
+  return g;
+}
+
+/* Rounded plant blob */
+function plantBlob(x, y, z, r, color) {
+  const m = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 8), mat(color, 0.9));
+  m.position.set(x, y, z); m.scale.y = 0.8; m.castShadow = true;
+  buildGroup.add(m);
+  return m;
+}
+
+/* ============================================================
+   BUILDERS — new project types (big → small)
+   ============================================================ */
+
+function buildPergola(tier) {
+  const { L, W, H, feats } = state;
+  const up = tier === "up";
+  const wood = up ? PAL.woodDark() : PAL.woodPT();
+  const ph = Math.max(H, 8);
+  if (up) box(L + 2, 0.3, W + 2, PAL.concrete(), 0, 0.15, 0);
+  const xs = L > 16 ? [-L/2 + 0.5, 0, L/2 - 0.5] : [-L/2 + 0.5, L/2 - 0.5];
+  const zs = [-W/2 + 0.5, W/2 - 0.5];
+  for (const px of xs) for (const pz of zs) {
+    box(0.55, ph, 0.55, wood, px, ph/2, pz);
+    if (up) { box(0.95, 0.4, 0.95, mat(0x8b8378, 0.9), px, 0.35, pz); box(0.72, 0.15, 0.72, PAL.woodDark(), px, ph + 0.05, pz); }
+  }
+  for (const pz of zs) {
+    box(L + (up ? 2 : 0.6), 0.35, 0.22, wood, 0, ph + 0.2, pz - 0.16);
+    box(L + (up ? 2 : 0.6), 0.35, 0.22, wood, 0, ph + 0.2, pz + 0.16);
+  }
+  const rSpace = up ? 1.0 : 1.6;
+  for (let rx = -L/2 + 0.6; rx <= L/2 - 0.5; rx += rSpace)
+    box(0.18, 0.4, W + (up ? 2 : 0.8), wood, rx, ph + 0.5, 0);
+  if (up) for (let sz = -W/2; sz <= W/2; sz += 0.7) box(L + 1.6, 0.1, 0.13, wood, 0, ph + 0.8, sz);
+  if (feats.lighting) for (let rx = -L/2 + 1; rx < L/2; rx += 2.2) box(0.16, 0.16, 0.16, PAL.light(), rx, ph + 0.35, 0);
+  if (feats.bench) { box(Math.min(6, L * 0.6), 0.25, 1.3, wood, 0, 1.35, -W/2 + 0.9); box(Math.min(6, L * 0.6), 1.1, 0.2, wood, 0, 0.7, -W/2 + 0.4); }
+  scaleFigure(-L/2 - 3, W/2 + 2);
+  label(`${state.L}' × ${state.W}'`, 0, 1.2, W/2 + 3.5);
+  return { focusY: ph/2 + 1, size: Math.max(L, W) + 6 };
+}
+
+function buildGazebo(tier) {
+  const { L, H, feats } = state;
+  const up = tier === "up";
+  const R = Math.max(L, 6) / 2;
+  const ph = Math.max(H, 7.5);
+  const wood = up ? PAL.woodDark() : PAL.woodPT();
+  const floorMat = up ? PAL.composite() : PAL.woodPT();
+  const roofMat = up ? PAL.shingleUp() : PAL.shingleA();
+  cyl(R + 0.3, R + 0.3, 0.5, wood, 0, 0.15, 0, buildGroup, 8);
+  cyl(R, R, 0.42, floorMat, 0, 0.21, 0, buildGroup, 8);
+  const pts = [];
+  for (let i = 0; i < 8; i++) { const a = Math.PI/8 + i * Math.PI/4; pts.push([Math.cos(a) * (R - 0.4), Math.sin(a) * (R - 0.4)]); }
+  for (const [x, z] of pts) box(0.4, ph, 0.4, wood, x, ph/2 + 0.4, z);
+  for (let i = 0; i < 8; i++) {
+    const [x1, z1] = pts[i], [x2, z2] = pts[(i + 1) % 8];
+    const mx = (x1 + x2)/2, mz = (z1 + z2)/2, len = Math.hypot(x2 - x1, z2 - z1), ang = Math.atan2(z2 - z1, x2 - x1);
+    box(len, 0.3, 0.2, wood, mx, ph + 0.4, mz).rotation.y = -ang;
+    if (i !== 0) {
+      box(len - 0.6, 0.15, 0.12, wood, mx, 2.0, mz).rotation.y = -ang;
+      box(len - 0.6, 0.12, 0.1, wood, mx, 0.9, mz).rotation.y = -ang;
+      const nb = Math.floor(len / 0.5);
+      for (let b = 1; b < nb; b++) { const t = b/nb, bx = x1 + (x2 - x1) * t, bz = z1 + (z2 - z1) * t; box(up ? 0.07 : 0.1, 1.1, up ? 0.07 : 0.1, up ? PAL.metal() : wood, bx, 1.35, bz); }
+      if (feats.bench) box(len - 0.7, 0.2, 0.9, floorMat, mx, 1.4, mz * 0.8).rotation.y = -ang;
+    }
+  }
+  cyl(0.2, R + 0.8, R * 0.9, roofMat, 0, ph + 0.4 + R * 0.45, 0, buildGroup, 8);
+  if (up) { cyl(0.85, 0.85, 1.1, PAL.trimWhite(), 0, ph + 0.4 + R * 0.9 + 0.4, 0, buildGroup, 8); cyl(0.1, 1.05, 0.9, roofMat, 0, ph + 0.4 + R * 0.9 + 1.35, 0, buildGroup, 8); }
+  if (feats.firepit) { cyl(1.4, 1.6, 0.9, mat(0x83766a, 0.95), 0, 0.65, 0, buildGroup, 20); cyl(1.05, 1.05, 0.18, new THREE.MeshStandardMaterial({ color: 0xff7722, emissive: 0xff5500, emissiveIntensity: 1.4 }), 0, 1.05, 0); }
+  scaleFigure(R + 3, 0);
+  label(`${state.L}' across`, 0, 1.2, R + 3.5);
+  return { focusY: ph * 0.6, size: R * 2 + 8 };
+}
+
+function buildPorch(tier) {
+  const { L, W, H, feats } = state;
+  const up = tier === "up";
+  const fT = Math.max(H, 1);
+  const postH = 8.5;
+  const floorMat = up ? PAL.composite() : PAL.woodPT();
+  const roofMat = up ? PAL.shingleUp() : PAL.shingleA();
+  box(L + 8, postH + 6, 1.0, PAL.siding(), 0, (postH + 6)/2, -W/2 - 0.5);         // house wall
+  box(3, 6.5, 0.3, mat(0x6b4a2f), -L/4, 3.25, -W/2 + 0.1);                        // house door
+  for (const px of [-L/2 + 0.5, L/2 - 0.5]) for (const pz of [-W/2 + 0.5, W/2 - 0.5]) box(0.4, fT, 0.4, PAL.woodPT(), px, fT/2, pz);
+  box(L, 0.6, W, mat(0x8a6a4a), 0, fT - 0.3, 0);
+  for (let z = -W/2 + 0.28; z < W/2; z += 0.55) box(L, 0.12, 0.5, floorMat, 0, fT + 0.06, z);
+  const nCol = Math.max(2, Math.round(L / 8));
+  const colXs = []; for (let i = 0; i < nCol; i++) colXs.push(-L/2 + 0.6 + i * ((L - 1.2) / (nCol - 1)));
+  for (const cx of colXs) {
+    if (up) { box(0.9, 0.6, 0.9, PAL.trimWhite(), cx, fT + 0.3, W/2 - 0.5); cyl(0.42, 0.5, postH - 0.6, PAL.trimWhite(), cx, fT + postH/2, W/2 - 0.5); box(0.9, 0.4, 0.9, PAL.trimWhite(), cx, fT + postH - 0.2, W/2 - 0.5); }
+    else box(0.5, postH, 0.5, PAL.woodPT(), cx, fT + postH/2, W/2 - 0.5);
+  }
+  box(L + 1, 0.5, 0.4, up ? PAL.trimWhite() : PAL.woodPT(), 0, fT + postH, W/2 - 0.4);
+  const roofRise = 3.2;
+  const roof = box(L + (up ? 2 : 1), 0.35, Math.hypot(W, roofRise) + 1, roofMat, 0, fT + postH + roofRise/2 + 0.2, 0.2);
+  roof.rotation.x = Math.atan2(roofRise, W);
+  if (up) box(L + 0.5, 0.1, W, mat(0xe8e2d4), 0, fT + postH - 0.25, 0);            // beadboard ceiling
+  for (let i = 0; i < colXs.length - 1; i++) {
+    const x1 = colXs[i], x2 = colXs[i + 1], mx = (x1 + x2)/2, seg = x2 - x1;
+    if (Math.abs(mx) < 2.6) continue;                                             // gap for steps
+    box(seg - 1, 0.16, 0.15, up ? PAL.woodDark() : PAL.woodPT(), mx, fT + 2.9, W/2 - 0.5);
+    box(seg - 1, 0.12, 0.12, up ? PAL.woodDark() : PAL.woodPT(), mx, fT + 0.5, W/2 - 0.5);
+    const nb = Math.floor((seg - 1) / 0.45);
+    for (let b = 1; b < nb; b++) box(up ? 0.07 : 0.1, 2.3, up ? 0.07 : 0.1, up ? PAL.metal() : PAL.woodPT(), x1 + seg * (b/nb), fT + 1.7, W/2 - 0.5);
+  }
+  const steps = Math.max(2, Math.round(fT / 0.6));
+  for (let i = 1; i <= steps; i++) { const y = fT - i * (fT/steps); box(4.5, 0.14, 0.95, floorMat, 0, y + 0.07, W/2 + i * 0.95 - 0.475); }
+  if (feats.lighting) for (const cx of [colXs[0], colXs[colXs.length - 1]]) box(0.3, 0.5, 0.3, PAL.light(), cx, fT + postH - 1.5, W/2 - 0.35);
+  if (feats.gutters) box(L + 1, 0.25, 0.3, PAL.trimWhite(), 0, fT + postH + roofRise - 0.5, W/2 + 0.6);
+  if (feats.bench) box(Math.min(5, L * 0.4), 0.25, 1.2, floorMat, L/4, fT + 1.35, -W/2 + 1.2);
+  if (feats.hottub) { cyl(2.3, 2.3, 1.1, mat(0x4a4f57, 0.6), L/4, fT + 0.55, 0.2); cyl(2.0, 2.0, 0.15, new THREE.MeshStandardMaterial({ color: 0x3ba7d9, roughness: 0.1 }), L/4, fT + 1.1, 0.2); }
+  scaleFigure(L/2 + 3, W/2 + 3);
+  label(`${state.L}' × ${state.W}'`, 0, 1.2, W/2 + 3.5);
+  return { focusY: fT + postH * 0.5, size: Math.max(L, W) + 9 };
+}
+
+function buildCarport(tier) {
+  const { L, W, H, feats } = state;
+  const up = tier === "up";
+  const ph = Math.max(H, 8.5);
+  const postMat = up ? PAL.metal() : PAL.woodPT();
+  const roofMat = up ? PAL.shingleUp() : PAL.shingleA();
+  box(L + 1, 0.4, W + 1, PAL.concrete(), 0, 0.2, 0);
+  const xs = L > 22 ? [-L/2 + 0.6, 0, L/2 - 0.6] : [-L/2 + 0.6, L/2 - 0.6];
+  for (const px of xs) for (const pz of [-W/2 + 0.6, W/2 - 0.6]) box(0.5, ph, 0.5, postMat, px, ph/2, pz);
+  for (const pz of [-W/2 + 0.6, W/2 - 0.6]) box(L, 0.4, 0.4, postMat, 0, ph + 0.2, pz);
+  const peak = W * 0.28;
+  prism(W + (up ? 2 : 0.6), peak + 0.3, L + (up ? 2 : 0.6), roofMat, 0, ph + 0.4, 0).rotation.y = Math.PI/2;
+  if (up) { prism(W, peak, 0.3, PAL.sidingUp(), 0, ph + 0.4, -L/2).rotation.y = Math.PI/2; box(L, ph, 0.3, PAL.sidingUp(), 0, ph/2, -W/2 + 0.6); }
+  if (feats.lighting) for (const px of [xs[0], xs[xs.length - 1]]) box(0.3, 0.5, 0.3, PAL.light(), px, ph - 1, W/2 - 0.6);
+  if (feats.gutters) box(L + 1, 0.25, 0.3, PAL.trimWhite(), 0, ph + 0.1, W/2 + 0.7);
+  parkedCar(0, 0, 0);
+  scaleFigure(-L/2 - 3, W/2 + 2);
+  label(`${state.L}' × ${state.W}'`, 0, 1.2, W/2 + 3.5);
+  return { focusY: ph * 0.55, size: Math.max(L, W) + 8 };
+}
+
+function buildSunroom(tier) {
+  const { L, W, H, feats } = state;
+  const up = tier === "up";
+  const wallH = Math.max(H, 8);
+  const frameMat = up ? PAL.metal() : PAL.trimWhite();
+  const glass = PAL.glass();
+  const knee = up ? 0.6 : 2.6;
+  box(L + 0.6, 0.5, W + 0.6, PAL.concrete(), 0, 0.25, 0);
+  if (knee > 0.7) {
+    box(L, knee, 0.3, PAL.siding(), 0, 0.5 + knee/2, -W/2);
+    box(L, knee, 0.3, PAL.siding(), 0, 0.5 + knee/2, W/2);
+    box(0.3, knee, W, PAL.siding(), -L/2, 0.5 + knee/2, 0);
+    box(0.3, knee, W, PAL.siding(), L/2, 0.5 + knee/2, 0);
+  }
+  for (const x of [-L/2, -L/6, L/6, L/2]) for (const z of [-W/2, W/2]) box(0.3, wallH, 0.3, frameMat, x, 0.5 + wallH/2, z);
+  const gH = wallH - knee - 0.3, gy = 0.5 + knee + gH/2;
+  box(L - 0.4, gH, 0.1, glass, 0, gy, W/2 - 0.05);
+  box(L - 0.4, gH, 0.1, glass, 0, gy, -W/2 + 0.05);
+  box(0.1, gH, W - 0.4, glass, L/2 - 0.05, gy, 0);
+  box(0.1, gH, W - 0.4, glass, -L/2 + 0.05, gy, 0);
+  box(4, wallH - 0.6, 0.14, glass, 0, 0.5 + (wallH - 0.6)/2, W/2 + 0.02);
+  box(0.12, wallH - 0.6, 0.2, frameMat, 0, 0.5 + (wallH - 0.6)/2, W/2 + 0.05);
+  for (let mx = -L/2 + 2; mx < L/2; mx += 2.5) box(0.12, gH, 0.12, frameMat, mx, gy, W/2 - 0.02);
+  const peak = W * 0.22;
+  if (up) {
+    const gr = box(L + 1, 0.12, Math.hypot(W, peak) + 1, glass, 0, 0.5 + wallH + peak/2, 0); gr.rotation.x = Math.atan2(peak, W);
+    for (let mx = -L/2; mx <= L/2; mx += 2.2) { const b = box(0.12, 0.2, Math.hypot(W, peak) + 1, frameMat, mx, 0.5 + wallH + peak/2 + 0.05, 0); b.rotation.x = Math.atan2(peak, W); }
+  } else {
+    prism(W + 0.6, peak + 0.3, L + 0.6, PAL.shingleA(), 0, 0.5 + wallH, 0).rotation.y = Math.PI/2;
+    if (feats.skylight) { const sk = box(2.2, 0.12, 2.6, glass, L/6, 0.5 + wallH + peak * 0.5, 0); sk.rotation.x = -Math.atan2(peak, W/2); }
+  }
+  scaleFigure(L/2 + 3, W/2 + 2);
+  label(`${state.L}' × ${state.W}'`, 0, 1.2, W/2 + 3.5);
+  return { focusY: wallH/2 + 1, size: Math.max(L, W) + 6 };
+}
+
+function buildBarn(tier) {
+  const { L, W, H, feats } = state;
+  const up = tier === "up";
+  const wallH = Math.max(H, 10);
+  const wallMat = mat(up ? 0x8a2f28 : 0x9c3a30);
+  const trim = PAL.trimWhite();
+  const roofMat = up ? PAL.shingleUp() : PAL.shingleA();
+  box(L + 0.6, 0.5, W + 0.6, PAL.concrete(), 0, 0.25, 0);
+  box(L, wallH, 0.4, wallMat, 0, 0.5 + wallH/2, -W/2);
+  box(L, wallH, 0.4, wallMat, 0, 0.5 + wallH/2, W/2);
+  box(0.4, wallH, W, wallMat, -L/2, 0.5 + wallH/2, 0);
+  box(0.4, wallH, W, wallMat, L/2, 0.5 + wallH/2, 0);
+  const g = gambrelRoof(W, L, mat(0x7f2a22), 0.5 + wallH);
+  const dw = Math.min(L * 0.4, 10), dh = Math.min(wallH - 1, 9);
+  box(dw, dh, 0.2, mat(0xb5402f), 0, 0.5 + dh/2, W/2 + 0.05);
+  box(dw, 0.3, 0.22, trim, 0, 0.5 + dh - 0.2, W/2 + 0.1); box(dw, 0.3, 0.22, trim, 0, 0.5 + 0.3, W/2 + 0.1);
+  box(dw * 1.15, 0.28, 0.1, trim, 0, 0.5 + dh/2, W/2 + 0.14).rotation.z = Math.atan2(dh, dw);
+  box(dw * 1.15, 0.28, 0.1, trim, 0, 0.5 + dh/2, W/2 + 0.14).rotation.z = -Math.atan2(dh, dw);
+  box(dw + 1, 0.25, 0.15, PAL.metal(), 0, 0.5 + dh + 0.4, W/2 + 0.2);
+  for (const sx of [-1, 1]) box(2.6, 2.6, 0.15, PAL.glass(), sx * L/4, 0.5 + wallH * 0.62, W/2 + 0.03);
+  if (up) {
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) box(0.5, wallH, 0.5, trim, sx * (L/2 - 0.1), 0.5 + wallH/2, sz * (W/2 - 0.1));
+    box(2, 2, 2, trim, 0, 0.5 + wallH + g.peak + 0.4, 0);
+    prism(2.6, 1.2, 2.6, roofMat, 0, 0.5 + wallH + g.peak + 1.4, 0);
+    box(2.8, 0.15, 0.6, roofMat, 0, 0.5 + wallH + g.peak * 0.5, W/2 - 0.2);          // side door awning hint
+  }
+  if (feats.gutters) box(L + 0.5, 0.25, 0.3, trim, 0, 0.5 + wallH * 0.99, W/2 + 0.5);
+  parkedCar(-L/4, W/2 + 9, 0);
+  scaleFigure(L/2 + 4, W/2 + 3);
+  label(`${state.L}' × ${state.W}'`, 0, 1.2, W/2 + 4);
+  return { focusY: wallH * 0.6, size: Math.max(L, W) + 10 };
+}
+
+function buildRetainingWall(tier) {
+  const { L, H, feats } = state;
+  const up = tier === "up";
+  const wallH = Math.max(H, 1.5);
+  const blockH = 0.75, courses = Math.max(2, Math.round(wallH / blockH));
+  const blockMat = up ? mat(0x9a8b78, 0.9) : mat(0x8f8c86, 0.95);
+  const setback = 0.18;
+  for (let c = 0; c < courses; c++) {
+    const z = c * setback, y = c * blockH + blockH/2, bw = 1.5;
+    for (let x = -L/2; x < L/2 - 0.1; x += bw) { const w = Math.min(bw, L/2 - x); box(w - 0.05, blockH - 0.05, 1.2, blockMat, x + w/2, y, z); }
+  }
+  box(L, courses * blockH, 3, mat(0x6b5a3a, 1), 0, courses * blockH/2, (courses - 1) * setback + 2.1);   // backfill grade
+  box(L + 0.3, 0.3, 1.5, up ? mat(0x7d6650, 0.85) : blockMat, 0, courses * blockH + 0.15, (courses - 1) * setback);
+  if (up && feats.lighting) for (let x = -L/2 + 3; x < L/2; x += 6) box(0.4, 0.2, 0.4, PAL.light(), x, courses * blockH + 0.35, (courses - 1) * setback);
+  scaleFigure(-L/2 - 3, -3);
+  label(`${state.L}' long`, 0, 1.2, -3.5);
+  label(`${state.H}' tall`, -L/2 - 2, wallH/2 + 0.5, 0, 0.8);
+  return { focusY: wallH/2 + 0.5, size: L * 0.8 + 8 };
+}
+
+function buildDriveway(tier) {
+  const { L, W, feats } = state;
+  const up = tier === "up";
+  box(L, 0.35, W, up ? PAL.stamped() : PAL.concrete(), 0, 0.18, 0);
+  if (up) {
+    const pv = mat(0x9c8672, 0.9), pv2 = mat(0x8a745f, 0.9), border = mat(0x6b5949);
+    let i = 0; for (let x = -L/2 + 0.5; x < L/2 - 0.4; x += 1.0, i++) { let j = 0; for (let z = -W/2 + 0.5; z < W/2 - 0.4; z += 1.0, j++) box(0.9, 0.37, 0.9, (i + j) % 2 ? pv : pv2, x + 0.45, 0.19, z + 0.45); }
+    box(L + 0.4, 0.4, 0.7, border, 0, 0.2, W/2 + 0.1); box(L + 0.4, 0.4, 0.7, border, 0, 0.2, -W/2 - 0.1);
+    box(0.7, 0.4, W + 0.4, border, L/2 + 0.1, 0.2, 0); box(0.7, 0.4, W + 0.4, border, -L/2 - 0.1, 0.2, 0);
+  } else {
+    const lm = mat(0xa09d97);
+    for (let x = -L/2 + L/4; x < L/2; x += L/4) box(0.08, 0.36, W, lm, x, 0.19, 0);
+    box(L, 0.36, 0.08, lm, 0, 0.19, 0);
+  }
+  if (feats.lighting) for (let z = -W/2 + 2; z < W/2; z += 4) { box(0.2, 0.6, 0.2, PAL.light(), L/2 - 0.5, 0.5, z); box(0.2, 0.6, 0.2, PAL.light(), -L/2 + 0.5, 0.5, z); }
+  parkedCar(0, 0, 0);
+  scaleFigure(L/2 + 3, 0);
+  label(`${state.L}' × ${state.W}'`, 0, 1.2, W/2 + 3);
+  return { focusY: 1.5, size: Math.max(L, W) + 8 };
+}
+
+function buildWalkway(tier) {
+  const { L, W, feats } = state;
+  const up = tier === "up";
+  const w = Math.max(W, 2.5);
+  box(L, 0.3, w, up ? PAL.stamped() : PAL.concrete(), 0, 0.15, 0);
+  if (up) {
+    const pv = mat(0x9c8672, 0.9), pv2 = mat(0x8a745f, 0.9), border = mat(0x6b5949);
+    let i = 0; for (let x = -L/2 + 0.4; x < L/2 - 0.3; x += 0.85, i++) { let j = 0; for (let z = -w/2 + 0.4; z < w/2 - 0.3; z += 0.85, j++) box(0.75, 0.33, 0.75, (i + j) % 2 ? pv : pv2, x + 0.4, 0.16, z + 0.4); }
+    box(L + 0.3, 0.35, 0.4, border, 0, 0.17, w/2 + 0.05); box(L + 0.3, 0.35, 0.4, border, 0, 0.17, -w/2 - 0.05);
+  } else {
+    const lm = mat(0xa09d97);
+    for (let x = -L/2 + 3; x < L/2; x += 3) box(0.08, 0.31, w, lm, x, 0.16, 0);
+  }
+  if (feats.lighting) for (let x = -L/2 + 3; x < L/2; x += 5) box(0.18, 0.7, 0.18, PAL.light(), x, 0.5, w/2 + 0.6);
+  scaleFigure(0, w/2 + 3);
+  label(`${state.L}' × ${state.W}'`, 0, 1.2, w/2 + 3.5);
+  return { focusY: 1, size: L * 0.8 + 8 };
+}
+
+function buildStairs(tier) {
+  const { L, H, feats } = state;
+  const up = tier === "up";
+  const width = Math.max(L, 3), rise = Math.max(H, 1);
+  const nSteps = Math.max(2, Math.round(rise / 0.6)), stepH = rise / nSteps, run = 0.95;
+  const treadMat = up ? PAL.composite() : PAL.woodPT();
+  const strMat = up ? PAL.woodDark() : PAL.woodPT();
+  const totalRun = nSteps * run;
+  for (let i = 0; i < nSteps; i++) {
+    const y = i * stepH, z = i * run;
+    box(width, 0.14, run + 0.1, treadMat, 0, y + stepH + 0.07, z);
+    box(width, stepH, 0.12, up ? PAL.trimWhite() : strMat, 0, y + stepH/2, z - run/2);
+    if (up && feats.lighting) box(width * 0.9, 0.06, 0.06, PAL.light(), 0, y + stepH - 0.05, z + run/2 - 0.05);
+  }
+  for (const sx of [-1, 1]) {
+    const str = box(0.2, rise * 1.1, Math.hypot(totalRun, rise) + 0.5, strMat, sx * width/2, rise/2, totalRun/2 - run/2);
+    str.rotation.x = -Math.atan2(rise, totalRun);
+    const rail = box(0.15, 0.15, Math.hypot(totalRun, rise) + 0.5, up ? PAL.metal() : strMat, sx * width/2, rise + 2.9, totalRun/2 - run/2);
+    rail.rotation.x = -Math.atan2(rise, totalRun);
+    const step = Math.max(1, Math.round(nSteps / 4));
+    for (let i = 0; i <= nSteps; i += step) box(0.1, 3, 0.1, up ? PAL.metal() : strMat, sx * width/2, i * stepH + 1.4, i * run);
+  }
+  scaleFigure(width/2 + 3, -2);
+  label(`${state.L}' wide · ${state.H}' rise`, 0, rise + 1.5, totalRun + 1);
+  return { focusY: rise/2 + 1, size: Math.max(width, totalRun) + 8 };
+}
+
+function buildRamp(tier) {
+  const { L, H, feats } = state;
+  const up = tier === "up";
+  const width = Math.max(L, 3), rise = Math.max(H, 1), run = Math.max(rise * 12, 6);
+  const deckMat = up ? PAL.composite() : PAL.woodPT();
+  const frameMat = up ? PAL.woodDark() : PAL.woodPT();
+  const rampLen = Math.hypot(run, rise);
+  box(width, 0.15, rampLen, deckMat, 0, rise/2, 0).rotation.x = -Math.atan2(rise, run);
+  box(width, 0.15, 4, deckMat, 0, rise, run/2 + 2);                                 // top landing
+  const nP = Math.max(2, Math.round(run / 5));
+  for (let i = 0; i <= nP; i++) { const t = i/nP, z = -run/2 + t * run, y = t * rise; box(0.3, Math.max(y, 0.2), 0.3, frameMat, width/2 - 0.3, y/2, z); box(0.3, Math.max(y, 0.2), 0.3, frameMat, -width/2 + 0.3, y/2, z); }
+  const railMat = up ? PAL.metal() : frameMat;
+  for (const sx of [-1, 1]) {
+    box(0.12, 0.12, rampLen, railMat, sx * (width/2 - 0.15), rise/2 + 2.9, 0).rotation.x = -Math.atan2(rise, run);
+    box(0.1, 0.1, rampLen, railMat, sx * (width/2 - 0.15), rise/2 + 1.6, 0).rotation.x = -Math.atan2(rise, run);
+    for (let i = 0; i <= nP; i++) { const t = i/nP, z = -run/2 + t * run, y = t * rise; box(0.09, 3, 0.09, railMat, sx * (width/2 - 0.15), y + 1.45, z); }
+    box(0.1, 3, 0.1, railMat, sx * (width/2 - 0.15), rise + 1.45, run/2 + 3.8);
+  }
+  if (feats.lighting) for (let i = 1; i < nP; i += 2) { const t = i/nP; box(0.15, 0.15, 0.15, PAL.light(), width/2 - 0.15, t * rise + 1.5, -run/2 + t * run); }
+  scaleFigure(0, -run/2 - 3);
+  label(`${state.H}' rise · ${Math.round(run)}' ramp`, 0, rise + 2, run/2 + 4);
+  return { focusY: rise/2 + 1, size: Math.max(width, run) + 8 };
+}
+
+function buildPlanter(tier) {
+  const { L, W, H, feats } = state;
+  const up = tier === "up";
+  const bedH = Math.max(H, 1);
+  const woodMat = up ? mat(0x9a6b42) : PAL.woodPT();
+  const soil = mat(0x3a2c1e, 1);
+  const nBeds = L > 10 ? 2 : 1;
+  const bedL = nBeds > 1 ? L/2 - 1 : L;
+  for (let b = 0; b < nBeds; b++) {
+    const ox = nBeds > 1 ? (b === 0 ? -L/4 - 0.5 : L/4 + 0.5) : 0;
+    box(bedL, bedH, 0.3, woodMat, ox, bedH/2, -W/2);
+    box(bedL, bedH, 0.3, woodMat, ox, bedH/2, W/2);
+    box(0.3, bedH, W, woodMat, ox - bedL/2, bedH/2, 0);
+    box(0.3, bedH, W, woodMat, ox + bedL/2, bedH/2, 0);
+    box(bedL - 0.4, 0.2, W - 0.4, soil, ox, bedH - 0.1, 0);
+    if (up) {
+      box(bedL + 0.4, 0.2, 0.5, woodMat, ox, bedH + 0.05, -W/2); box(bedL + 0.4, 0.2, 0.5, woodMat, ox, bedH + 0.05, W/2);
+      box(0.5, 0.2, W + 0.4, woodMat, ox - bedL/2, bedH + 0.05, 0); box(0.5, 0.2, W + 0.4, woodMat, ox + bedL/2, bedH + 0.05, 0);
+    }
+    for (let i = 0; i < 5; i++) plantBlob(ox + (Math.random() - 0.5) * (bedL - 1), bedH + 0.3, (Math.random() - 0.5) * (W - 1), 0.35 + Math.random() * 0.25, 0x4a7a3a);
+  }
+  if (up) {
+    const ox = nBeds > 1 ? L/4 + 0.5 : 0;
+    for (let x = ox - bedL/2; x <= ox + bedL/2; x += 1) box(0.08, 3.5, 0.08, woodMat, x, bedH + 1.75, W/2 - 0.2);
+    for (let y = bedH + 0.5; y < bedH + 3.5; y += 0.7) box(bedL, 0.06, 0.06, woodMat, ox, y, W/2 - 0.2);
+  }
+  scaleFigure(L/2 + 3, W/2 + 2);
+  label(`${state.L}' × ${state.W}'`, 0, 1.2, W/2 + 3);
+  return { focusY: bedH + 1, size: Math.max(L, W) + 7 };
+}
+
 const BUILDERS = {
   deck: buildDeck,
   shed: t => buildShedLike(t, "shed"),
   garage: t => buildShedLike(t, "garage"),
   addition: t => buildShedLike(t, "addition"),
   fence: buildFence,
-  patio: buildPatio
+  patio: buildPatio,
+  pergola: buildPergola,
+  gazebo: buildGazebo,
+  porch: buildPorch,
+  carport: buildCarport,
+  sunroom: buildSunroom,
+  barn: buildBarn,
+  retainingwall: buildRetainingWall,
+  driveway: buildDriveway,
+  walkway: buildWalkway,
+  stairs: buildStairs,
+  ramp: buildRamp,
+  planter: buildPlanter
 };
 
 /* ============================================================
@@ -1037,7 +1543,7 @@ function renderCards() {
     listEl.innerHTML = items.join("");
     $(tier === "up" ? "priceUp" : "priceBasic").textContent = fmt$(p.total);
     $(tier === "up" ? "rangeUp" : "rangeBasic").textContent =
-      `Estimated range ${fmt$(p.lo)} – ${fmt$(p.hi)} · ${t.unit === "linear ft" ? state.L + " linear ft" : (state.L * state.W).toLocaleString() + " sq ft"}`;
+      `Estimated range ${fmt$(p.lo)} – ${fmt$(p.hi)} · ${t.measure(state)}`;
   }
   const upP = priceOut("up"), baP = priceOut("basic");
   $("cardUp").querySelector(".tier").innerHTML = `⭐ UPGRADED <span style="font-weight:400;color:var(--muted);font-size:11px">+${fmt$(upP.total - baP.total)} more</span>`;
@@ -1050,7 +1556,7 @@ function buildPrintSheet() {
   const addons = tier => priceOut(tier).items.map(i => `<li><b>${i.label}</b> — ${fmt$(i.cost)}</li>`).join("");
   $("printSheet").innerHTML = `
     <h1>${state.name || t.name + " Project"}</h1>
-    <div class="psub">${t.name} · ${t.unit === "linear ft" ? state.L + " linear ft" : state.L + "' × " + state.W + "'"} · prepared ${new Date().toLocaleDateString()}</div>
+    <div class="psub">${t.name} · ${t.measure(state)} · prepared ${new Date().toLocaleDateString()}</div>
     <img id="printImg" alt="3D preview">
     <div class="pcols">
       <div class="pcard">

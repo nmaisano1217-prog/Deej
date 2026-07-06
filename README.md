@@ -14,8 +14,11 @@ description of what the client wants, and get an interactive 3D preview with
 
 1. Open `index.html` in any browser (double-click it — no install, no internet
    needed once you have the two files).
-2. Pick what you're building: **Deck, Shed, Garage, Room Addition, Fence, or
-   Patio**.
+2. Pick what you're building — 18 job types, grouped big-to-small:
+   - **Structures:** Room Addition, Sunroom, Garage, Pole Barn, Shed
+   - **Outdoor Living:** Deck, Covered Porch, Patio, Pergola, Gazebo, Carport
+   - **Groundwork:** Driveway, Walkway, Retaining Wall, Fence
+   - **Small Projects:** Exterior Stairs, Wheelchair Ramp, Raised Garden Beds
 3. Enter the measurements in feet.
 4. Describe the job in plain words — the app automatically picks up things like
    *stairs, railing, lighting, pergola, fire pit, gate, bench, hot tub,
@@ -34,10 +37,11 @@ description of what the client wants, and get an interactive 3D preview with
 
 ### Pricing
 
-Set **your own base rate** ($/sq ft, or $/linear ft for fences) in the sidebar —
-a typical figure is pre-filled for each project type. The upgraded option and
-any extras price themselves from that. Estimates show as a range and are for
-planning only — not a quote.
+Set **your own base rate** in the sidebar — the unit adapts to the job ($/sq ft,
+$/linear ft for fences and ramps, $/face sq ft for retaining walls), and a typical
+figure is pre-filled for each project type. The upgraded option and any extras
+price themselves from that. Estimates show as a range and are for planning only —
+not a quote.
 
 ## Files
 
