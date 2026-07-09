@@ -57,7 +57,7 @@ not a quote.
 | `index.html` | The app — UI, 3D builders, pricing, **license lock** |
 | `three.min.js` | Three.js r128 (bundled locally so the app works offline) |
 | `buy.html` | Sales page — features, pricing, subscribe buttons, FAQ |
-| `keygen.html` | 🔒 **PRIVATE** — your license key generator. Never share or host it. |
+| `keygen.html` | 🔒 **NOT in this repo — stored locally only.** Your license key generator lives on your own computer, so it can never end up on a public website. It's gitignored so it won't be committed by accident. |
 
 No build step, no dependencies, no server.
 
@@ -79,11 +79,12 @@ The whole business runs on three pieces:
 
 ### One-time setup (do these before your first sale)
 
-1. **Change the secret.** In both `index.html` and `keygen.html` find the line
+1. **Change the secret.** In both `index.html` and your local copy of
+   `keygen.html` find the line
    `var SALT = "change-me-to-something-random-BV3"` and change it to your own
    random gibberish — **the same string in both files**. This is what makes
-   your keys forgery-proof-enough. Then keep `keygen.html` and this repo
-   **private**.
+   your keys forgery-proof-enough. (`keygen.html` isn't in this repo — it's
+   stored only on your own computer, and gitignored so it stays that way.)
 2. **Set up payments.** In [Stripe](https://stripe.com): Products → Add product
    → "BuildView 3D Pro", recurring, $29/month — then create a **Payment Link**
    for it. Do the same for a $290/year price. Paste the two links into the
@@ -92,8 +93,8 @@ The whole business runs on three pieces:
    order instead — so you can start selling today and add Stripe later.*
 3. **Put it online.** Host `index.html`, `three.min.js` and `buy.html` anywhere
    static — GitHub Pages, Netlify, Vercel (all free). Send prospects the
-   `buy.html` link. The app being public is fine — it's locked.
-   **Do not upload `keygen.html`.**
+   `buy.html` link. The app being public is fine — it's locked. `keygen.html`
+   stays on your computer and never goes online.
 
 ### Day-to-day
 
