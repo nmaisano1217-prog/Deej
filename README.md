@@ -1,6 +1,11 @@
-# BuildView 3D 🏗️
+# BuildView 3D Pro 🏗️
 
 **Show clients what you'll build — before you build it.**
+
+Now packaged as a **monthly subscription product**: the app is locked behind a
+license key, there's a sales page to send prospects to, and a private key
+generator you use to issue keys to paying subscribers. See
+[💰 Selling it](#-selling-it-as-a-subscription) below.
 
 A simple tool for contractors: type in the measurements and a plain-English
 description of what the client wants, and get an interactive 3D preview with
@@ -49,8 +54,61 @@ not a quote.
 
 | File | What it is |
 |---|---|
-| `index.html` | The whole app — UI, 3D builders, pricing |
+| `index.html` | The app — UI, 3D builders, pricing, **license lock** |
 | `three.min.js` | Three.js r128 (bundled locally so the app works offline) |
+| `buy.html` | Sales page — features, pricing, subscribe buttons, FAQ |
+| `keygen.html` | 🔒 **PRIVATE** — your license key generator. Never share or host it. |
 
-No build step, no dependencies, no server. Copy both files onto a laptop,
-tablet, or USB stick and it just works.
+No build step, no dependencies, no server.
+
+---
+
+## 💰 Selling it as a subscription
+
+The whole business runs on three pieces:
+
+1. **`buy.html`** — the page prospects see. It pitches the product at
+   **$29/month or $290/year** (edit the numbers right in the file if you want
+   different pricing).
+2. **`index.html`** — the app itself, locked. It asks for an email + license
+   key on first open, remembers it, and **locks itself again the day the key
+   expires**. Works fully offline after that first unlock.
+3. **`keygen.html`** — your tool. When someone pays, open it, type their email,
+   pick the plan, and it spits out their key **plus a ready-to-send welcome
+   email**. Takes 30 seconds per customer.
+
+### One-time setup (do these before your first sale)
+
+1. **Change the secret.** In both `index.html` and `keygen.html` find the line
+   `var SALT = "change-me-to-something-random-BV3"` and change it to your own
+   random gibberish — **the same string in both files**. This is what makes
+   your keys forgery-proof-enough. Then keep `keygen.html` and this repo
+   **private**.
+2. **Set up payments.** In [Stripe](https://stripe.com): Products → Add product
+   → "BuildView 3D Pro", recurring, $29/month — then create a **Payment Link**
+   for it. Do the same for a $290/year price. Paste the two links into the
+   marked spot at the bottom of `buy.html` (`STRIPE_MONTHLY` / `STRIPE_ANNUAL`).
+   *Until you do this, the subscribe buttons fall back to sending you an email
+   order instead — so you can start selling today and add Stripe later.*
+3. **Put it online.** Host `index.html`, `three.min.js` and `buy.html` anywhere
+   static — GitHub Pages, Netlify, Vercel (all free). Send prospects the
+   `buy.html` link. The app being public is fine — it's locked.
+   **Do not upload `keygen.html`.**
+
+### Day-to-day
+
+- **New subscriber** (Stripe emails you on every payment): open `keygen.html`,
+  enter their email, pick Monthly/Annual, copy the welcome email, send it. Done.
+- **Renewal**: when the next payment comes in, generate a fresh key for the
+  same email and send it.
+- **Cancellation**: do nothing. No new key → the app locks itself when the old
+  one runs out.
+- **Trial requests**: generate a 7-day key. No card, no risk — it expires on
+  its own.
+
+### Honest fine print
+
+The lock is a strong deterrent, not bank-vault DRM — this is a client-side app,
+so a determined nerd could pry it open. For selling to contractors at $29/mo,
+that's the right trade-off: zero servers, zero hosting costs, works offline,
+and honest customers stay honest.

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BuildView 3D — License Key Generator (PRIVATE)</title>
+<style>
+  :root{
+    --bg:#16181d; --panel:#1f232b; --panel2:#262b35; --line:#343b48;
+    --text:#e8eaee; --muted:#9aa3b2; --accent:#ff7a1a; --accent2:#ffb26b;
+    --good:#3ecf8e; --radius:12px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--text); min-height:100vh;
+    display:flex; align-items:flex-start; justify-content:center; padding:30px 16px;
+  }
+  .wrap{width:100%; max-width:560px;}
+  .warn{
+    background:#3a1c1c; border:1px solid #6b2f2f; color:#ffb3b3; border-radius:10px;
+    padding:12px 16px; font-size:13px; line-height:1.6; margin-bottom:18px;
+  }
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:26px 26px 30px;
+  }
+  h1{font-size:19px; margin-bottom:2px;}
+  .sub{color:var(--muted); font-size:12.5px; margin-bottom:18px;}
+  label{display:block; font-size:12.5px; color:var(--muted); margin:14px 0 4px;}
+  input, select{
+    width:100%; background:var(--panel2); border:1px solid var(--line); color:var(--text);
+    border-radius:8px; padding:10px 11px; font-size:14px; font-family:inherit;
+  }
+  input:focus, select:focus{outline:2px solid var(--accent); outline-offset:-1px; border-color:transparent;}
+  button{
+    width:100%; margin-top:18px; background:var(--accent); color:#1a1206; border:none;
+    font-size:15px; font-weight:700; padding:12px; border-radius:10px; cursor:pointer; font-family:inherit;
+  }
+  button:hover{background:var(--accent2);}
+  .out{display:none; margin-top:22px; border-top:1px solid var(--line); padding-top:18px;}
+  .keybox{
+    background:var(--panel2); border:1px solid var(--accent); border-radius:10px;
+    padding:14px; text-align:center; font-size:22px; font-weight:700; letter-spacing:1px;
+    color:var(--accent2); font-family:ui-monospace,Menlo,Consolas,monospace; user-select:all;
+  }
+  .meta{font-size:12.5px; color:var(--muted); text-align:center; margin-top:8px;}
+  .copybtn{background:var(--panel2); color:var(--text); border:1px solid var(--line); font-weight:600; font-size:13px; margin-top:10px;}
+  .copybtn:hover{border-color:var(--accent); background:var(--panel2);}
+  h2{font-size:12px; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin:22px 0 8px;}
+  textarea{
+    width:100%; background:var(--panel2); border:1px solid var(--line); color:var(--text);
+    border-radius:8px; padding:11px; font-size:13px; font-family:inherit; line-height:1.55;
+    min-height:210px; resize:vertical;
+  }
+  .hint{font-size:11.5px; color:var(--muted); line-height:1.6; margin-top:12px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="warn">
+    🔒 <b>PRIVATE TOOL — for you only.</b> Never email this file to anyone, never put it
+    on a website, never leave it on a customer's machine. Anyone who has it can make
+    free keys for your product.
+  </div>
+
+  <div class="card">
+    <h1>🏗️ BuildView 3D — Key Generator</h1>
+    <div class="sub">When someone subscribes (or asks for a trial), make their key here and email it to them.</div>
+
+    <label>Customer's email — the key only works with this exact address</label>
+    <input type="text" id="gEmail" placeholder="customer@example.com" spellcheck="false">
+
+    <label>Plan / duration</label>
+    <select id="gPlan">
+      <option value="7">Free trial — 7 days</option>
+      <option value="31" selected>Monthly — 31 days</option>
+      <option value="93">Quarterly — 3 months</option>
+      <option value="366">Annual — 12 months</option>
+      <option value="custom">Custom number of days…</option>
+    </select>
+    <div id="customWrap" style="display:none">
+      <label>Days</label>
+      <input type="number" id="gDays" value="31" min="1" max="3660">
+    </div>
+
+    <button id="gGo">Generate key</button>
+
+    <div class="out" id="out">
+      <div class="keybox" id="oKey"></div>
+      <div class="meta" id="oMeta"></div>
+      <button class="copybtn" id="oCopyKey">📋 Copy key</button>
+
+      <h2>Ready-to-send email</h2>
+      <textarea id="oEmail" spellcheck="false"></textarea>
+      <button class="copybtn" id="oCopyEmail">📋 Copy email text</button>
+
+      <div class="hint">
+        Renewals: when their next payment comes in, generate a fresh key for the same
+        email and send it — takes 30 seconds. If they cancel, simply don't send a new
+        key; the app locks itself the day the old one expires.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* SALT must match the SALT in index.html exactly, or keys won't work. */
+var SALT = "change-me-to-something-random-BV3";
+
+function hash6(s){
+  var h1=5381, h2=52711;
+  for(var i=0;i<s.length;i++){
+    var c=s.charCodeAt(i);
+    h1=((h1<<5)+h1+c)>>>0;
+    h2=((h2<<6)+h2+c*7)>>>0;
+  }
+  var n=(h1%1679616)*1296+(h2%1296);
+  n=n.toString(36).toUpperCase();
+  while(n.length<6) n="0"+n;
+  return n;
+}
+function normEmail(e){ return (e||"").trim().toLowerCase(); }
+function pad(n){ return (n<10?"0":"")+n; }
+
+document.getElementById("gPlan").addEventListener("change", function(){
+  document.getElementById("customWrap").style.display = this.value==="custom" ? "block" : "none";
+});
+
+document.getElementById("gGo").addEventListener("click", function(){
+  var email=document.getElementById("gEmail").value.trim();
+  if(!email || email.indexOf("@")<1){ alert("Enter the customer's email address first."); return; }
+  var plan=document.getElementById("gPlan").value;
+  var days=plan==="custom" ? Math.max(1, +document.getElementById("gDays").value||31) : +plan;
+
+  var d=new Date(); d.setDate(d.getDate()+days);
+  var expiry=""+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate());
+  var key="BV3-"+expiry+"-"+hash6(normEmail(email)+"|"+expiry+"|"+SALT);
+  var until=d.toLocaleDateString(undefined,{month:"long",day:"numeric",year:"numeric"});
+
+  document.getElementById("oKey").textContent=key;
+  document.getElementById("oMeta").textContent="For "+email+" · valid through "+until;
+  document.getElementById("oEmail").value=
+"Subject: Your BuildView 3D license key\n\n"+
+"Hi,\n\n"+
+"Thanks for subscribing to BuildView 3D! Here's your license key:\n\n"+
+"    "+key+"\n\n"+
+"To unlock the app:\n"+
+"1. Open BuildView 3D\n"+
+"2. Enter this email address: "+email+"\n"+
+"3. Paste the key and hit Unlock\n\n"+
+"Your key is valid through "+until+". You'll get a fresh key with each\n"+
+"renewal — nothing else to do.\n\n"+
+"Questions? Just reply to this email.\n";
+  document.getElementById("out").style.display="block";
+});
+
+function copy(txt, btn){
+  navigator.clipboard.writeText(txt).then(function(){
+    var old=btn.textContent; btn.textContent="✓ Copied";
+    setTimeout(function(){ btn.textContent=old; }, 1200);
+  });
+}
+document.getElementById("oCopyKey").addEventListener("click", function(){ copy(document.getElementById("oKey").textContent, this); });
+document.getElementById("oCopyEmail").addEventListener("click", function(){ copy(document.getElementById("oEmail").value, this); });
+</script>
+</body>
+</html>
