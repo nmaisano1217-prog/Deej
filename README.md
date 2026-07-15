@@ -57,6 +57,7 @@ not a quote.
 | `index.html` | The app — UI, 3D builders, pricing, **license lock** |
 | `three.min.js` | Three.js r128 (bundled locally so the app works offline) |
 | `buy.html` | Sales page — features, pricing, subscribe buttons, FAQ |
+| `team.html` | 🏢 **Deej's AI Team** — four AI employees who run the business with you (see below) |
 | `keygen.html` | 🔒 **NOT in this repo — stored locally only.** Your license key generator lives on your own computer, so it can never end up on a public website. It's gitignored so it won't be committed by accident. |
 
 No build step, no dependencies, no server.
@@ -113,3 +114,36 @@ The lock is a strong deterrent, not bank-vault DRM — this is a client-side app
 so a determined nerd could pry it open. For selling to contractors at $29/mo,
 that's the right trade-off: zero servers, zero hosting costs, works offline,
 and honest customers stay honest.
+
+---
+
+## 🏢 Deej's AI Team (`team.html`)
+
+Your company staff, powered by AI. Open `team.html` in a browser and you get
+four employees who already know BuildView inside-out — the product, the
+pricing, the customers — and do real work when you ask:
+
+| Employee | Role | What they do |
+|---|---|---|
+| 📣 **Mia** | Marketing Manager | Facebook/Instagram posts, ads, flyers, email blasts — ready to copy-paste |
+| 💼 **Sal** | Sales Rep | Cold outreach, follow-ups, replies to prospects, objection handling |
+| 🛟 **Sam** | Customer Support | Welcome emails, key troubleshooting, renewal reminders, refund replies |
+| 📊 **Bea** | Business Advisor | Pricing decisions, growth plans, "what should I do next?" |
+
+Each one has quick-task buttons (e.g. *"Write this week's Facebook post"*,
+*"Reply: my key isn't working"*) or you can type anything. Paste in a real
+customer email and get a ready-to-send reply back.
+
+### Setup (one time, ~2 minutes)
+
+1. Sign up at [console.anthropic.com](https://console.anthropic.com) (they make
+   Claude, the AI these employees run on)
+2. Add a few dollars of credit under **Billing**
+3. Create an **API key** and paste it into the app when it asks
+
+The key and all conversations are stored only in your browser, on your device.
+A typical task (a post, an email) costs a few cents. Unlike the other files,
+this one needs internet — the AI lives in the cloud.
+
+⚠️ Your API key is money — don't share it, and keep `team.html` for yourself
+(it's your back office, not part of what customers get).
