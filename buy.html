@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BuildView 3D Pro — Close more jobs with a 3D preview</title>
+<style>
+  :root{
+    --bg:#16181d; --panel:#1f232b; --panel2:#262b35; --line:#343b48;
+    --text:#e8eaee; --muted:#9aa3b2; --accent:#ff7a1a; --accent2:#ffb26b;
+    --good:#3ecf8e; --radius:12px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--text); line-height:1.6;
+  }
+  a{color:var(--accent2);}
+  .container{max-width:960px; margin:0 auto; padding:0 20px;}
+
+  nav{
+    display:flex; align-items:center; gap:12px; padding:14px 20px;
+    background:var(--panel); border-bottom:1px solid var(--line);
+    position:sticky; top:0; z-index:10;
+  }
+  nav .logo{
+    width:34px;height:34px;border-radius:8px;background:var(--accent);
+    display:flex;align-items:center;justify-content:center;font-size:19px;
+  }
+  nav b{font-size:16px;}
+  nav .spacer{flex:1;}
+  nav a{color:var(--muted); text-decoration:none; font-size:13.5px; margin-left:18px;}
+  nav a:hover{color:var(--text);}
+  nav a.cta{
+    background:var(--accent); color:#1a1206; font-weight:700; padding:8px 16px;
+    border-radius:8px;
+  }
+  nav a.cta:hover{background:var(--accent2); color:#1a1206;}
+
+  .hero{text-align:center; padding:70px 20px 50px;}
+  .hero h1{font-size:clamp(28px,5vw,44px); line-height:1.2; max-width:720px; margin:0 auto 16px;}
+  .hero h1 em{color:var(--accent); font-style:normal;}
+  .hero p{color:var(--muted); font-size:17px; max-width:600px; margin:0 auto 28px;}
+  .btnrow{display:flex; gap:12px; justify-content:center; flex-wrap:wrap;}
+  .btn{
+    display:inline-block; background:var(--accent); color:#1a1206; font-weight:700;
+    font-size:16px; padding:13px 28px; border-radius:10px; text-decoration:none; border:none; cursor:pointer;
+    font-family:inherit;
+  }
+  .btn:hover{background:var(--accent2);}
+  .btn.ghost{background:none; color:var(--text); border:1px solid var(--line);}
+  .btn.ghost:hover{border-color:var(--accent); background:none;}
+
+  .demo{
+    max-width:760px; margin:10px auto 0; background:var(--panel); border:1px solid var(--line);
+    border-radius:var(--radius); padding:22px; text-align:left;
+    display:grid; grid-template-columns:1fr 1fr; gap:18px;
+  }
+  .demo .shot{
+    background:linear-gradient(160deg,#232a36,#1a1f28); border:1px solid var(--line); border-radius:10px;
+    min-height:190px; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px;
+    color:var(--muted); font-size:13px;
+  }
+  .demo .shot .big{font-size:52px;}
+  .demo ul{list-style:none;}
+  .demo li{padding:6px 0 6px 26px; position:relative; font-size:14px;}
+  .demo li::before{content:"✓"; position:absolute; left:2px; color:var(--good); font-weight:700;}
+
+  section{padding:56px 0;}
+  section h2{font-size:26px; text-align:center; margin-bottom:8px;}
+  section .lead{color:var(--muted); text-align:center; max-width:560px; margin:0 auto 36px; font-size:15px;}
+
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px;}
+  .feat{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:20px;}
+  .feat .ic{font-size:26px; margin-bottom:8px;}
+  .feat h3{font-size:15.5px; margin-bottom:6px;}
+  .feat p{font-size:13.5px; color:var(--muted);}
+
+  .steps{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; counter-reset:step;}
+  .step{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:22px 20px;}
+  .step::before{
+    counter-increment:step; content:counter(step);
+    display:flex; align-items:center; justify-content:center;
+    width:30px; height:30px; border-radius:99px; background:var(--accent); color:#1a1206;
+    font-weight:700; margin-bottom:12px;
+  }
+  .step h3{font-size:15px; margin-bottom:5px;}
+  .step p{font-size:13.5px; color:var(--muted);}
+
+  .plans{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; max-width:640px; margin:0 auto;}
+  .plan{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:26px 24px; text-align:center; position:relative;
+  }
+  .plan.best{border-color:var(--accent);}
+  .plan .tag{
+    position:absolute; top:-11px; left:50%; transform:translateX(-50%);
+    background:var(--accent); color:#1a1206; font-size:11px; font-weight:700;
+    padding:3px 12px; border-radius:99px; text-transform:uppercase; letter-spacing:.06em;
+  }
+  .plan h3{font-size:15px; color:var(--muted); text-transform:uppercase; letter-spacing:.1em;}
+  .plan .price{font-size:40px; font-weight:700; margin:10px 0 2px;}
+  .plan .per{color:var(--muted); font-size:13px; margin-bottom:16px;}
+  .plan ul{list-style:none; text-align:left; margin-bottom:20px;}
+  .plan li{padding:5px 0 5px 24px; position:relative; font-size:13.5px;}
+  .plan li::before{content:"✓"; position:absolute; left:0; color:var(--good); font-weight:700;}
+  .plan .btn{width:100%;}
+  .trialnote{text-align:center; color:var(--muted); font-size:13.5px; margin-top:22px;}
+
+  .faq{max-width:680px; margin:0 auto;}
+  .faq details{
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:14px 18px; margin-bottom:10px;
+  }
+  .faq summary{cursor:pointer; font-weight:600; font-size:14.5px;}
+  .faq p{color:var(--muted); font-size:13.5px; margin-top:8px;}
+
+  footer{
+    border-top:1px solid var(--line); padding:26px 20px; text-align:center;
+    color:var(--muted); font-size:12.5px;
+  }
+
+  @media (max-width:640px){
+    .demo{grid-template-columns:1fr;}
+    nav a:not(.cta){display:none;}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">🏗️</div>
+  <b>BuildView 3D <span style="color:var(--accent2)">Pro</span></b>
+  <div class="spacer"></div>
+  <a href="#features">Features</a>
+  <a href="#how">How it works</a>
+  <a href="#faq">FAQ</a>
+  <a href="#pricing" class="cta">Subscribe</a>
+</nav>
+
+<div class="hero">
+  <h1>Stop describing the job.<br><em>Show it in 3D</em> — and close on the spot.</h1>
+  <p>BuildView 3D turns measurements and a plain-English description into an interactive
+     3D preview with two priced options: the standard build, and an upgraded version
+     that sells itself. Made for contractors, right at the kitchen table.</p>
+  <div class="btnrow">
+    <a class="btn" href="#pricing">Get BuildView 3D Pro</a>
+    <a class="btn ghost" href="#how">See how it works</a>
+  </div>
+</div>
+
+<div class="container">
+  <div class="demo">
+    <div class="shot">
+      <div class="big">🏗️</div>
+      <div>Interactive 3D preview — drag to spin, pinch to zoom</div>
+    </div>
+    <ul>
+      <li>25 job types: decks, additions, garages, fences, kitchens &amp; more</li>
+      <li>Standard vs ⭐ Upgraded, side by side — a built-in upsell</li>
+      <li>Prices itself from <b>your</b> rates</li>
+      <li>Photo &amp; one-page print handout for the client</li>
+      <li>Works offline on phones, tablets and laptops</li>
+    </ul>
+  </div>
+</div>
+
+<section id="features">
+  <div class="container">
+    <h2>Why contractors keep it open in the truck</h2>
+    <p class="lead">No CAD skills. No design fees. No waiting on drawings. Type it in, hit Generate, hand them the tablet.</p>
+    <div class="grid">
+      <div class="feat"><div class="ic">🗣️</div><h3>Plain-English input</h3>
+        <p>Write it the way the client says it — "16 by 12 deck, 3 feet up, stairs to the yard, maybe lighting." The app picks up the details and adds them to the model and the price.</p></div>
+      <div class="feat"><div class="ic">⭐</div><h3>The upgrade sells itself</h3>
+        <p>Every preview comes as two versions: standard and upgraded with premium materials and extras. Clients pick the upgrade far more often when they can see it.</p></div>
+      <div class="feat"><div class="ic">💵</div><h3>Your rates, not ours</h3>
+        <p>Set your own $/sq ft or $/linear ft — the estimate range builds from your numbers, so the ballpark is always your ballpark.</p></div>
+      <div class="feat"><div class="ic">📱</div><h3>Works anywhere, even offline</h3>
+        <p>Runs in any browser on a phone, tablet or laptop with no internet needed. Basements, backyards, dead zones — doesn't matter.</p></div>
+      <div class="feat"><div class="ic">🖨️</div><h3>Leave-behind that closes</h3>
+        <p>One tap prints a one-page summary: the 3D picture plus a side-by-side price comparison the client can show their spouse.</p></div>
+      <div class="feat"><div class="ic">🏠</div><h3>25 job types</h3>
+        <p>Structures, outdoor living, groundwork, small projects, and cabinetry — from room additions and pole barns down to vanities and workbenches.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="how" style="background:var(--panel); border-top:1px solid var(--line); border-bottom:1px solid var(--line);">
+  <div class="container">
+    <h2>How it works</h2>
+    <p class="lead">From "so what would that look like?" to a signed yes — in about two minutes.</p>
+    <div class="steps">
+      <div class="step"><h3>Pick the job</h3><p>Choose from 25 project types and punch in the measurements in feet.</p></div>
+      <div class="step"><h3>Describe it</h3><p>Type what the client wants in plain words. Stairs, railing, lighting, pergola, fire pit — it's all picked up automatically.</p></div>
+      <div class="step"><h3>Generate</h3><p>Get an interactive 3D model the client can spin and zoom, priced from your base rate.</p></div>
+      <div class="step"><h3>Show both options</h3><p>Flip between Standard and ⭐ Upgraded while they watch, then print the one-pager.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="pricing">
+  <div class="container">
+    <h2>Simple pricing</h2>
+    <p class="lead">One extra "yes" on an upgrade pays for the year. Cancel anytime — no contracts.</p>
+    <div class="plans">
+      <div class="plan">
+        <h3>Monthly</h3>
+        <div class="price">$29</div>
+        <div class="per">per month</div>
+        <ul>
+          <li>Full app — all 25 job types</li>
+          <li>Standard + Upgraded previews</li>
+          <li>Photo &amp; print handouts</li>
+          <li>Use on all your devices</li>
+          <li>Cancel anytime</li>
+        </ul>
+        <button class="btn" data-plan="monthly">Subscribe monthly</button>
+      </div>
+      <div class="plan best">
+        <div class="tag">2 months free</div>
+        <h3>Annual</h3>
+        <div class="price">$290</div>
+        <div class="per">per year — like $24/mo</div>
+        <ul>
+          <li>Everything in Monthly</li>
+          <li>One key, good all year</li>
+          <li>Priority email support</li>
+          <li>Lock in your price</li>
+          <li>Cancel anytime</li>
+        </ul>
+        <button class="btn" data-plan="annual">Subscribe yearly</button>
+      </div>
+    </div>
+    <p class="trialnote">Want to try it first? <a id="trialLink" href="#">Email us</a> for a <b>free 7-day trial key</b> — no card needed.</p>
+  </div>
+</section>
+
+<section id="faq" style="background:var(--panel); border-top:1px solid var(--line);">
+  <div class="container">
+    <h2>Questions</h2>
+    <p class="lead"></p>
+    <div class="faq">
+      <details><summary>What exactly do I get when I subscribe?</summary>
+        <p>Within a few hours of subscribing you'll get an email with your personal license key and a link to the app. Enter your email and the key once per device and you're in.</p></details>
+      <details><summary>Does it need internet on the job site?</summary>
+        <p>No. Once the app is open on your device it runs fully offline — 3D previews, pricing, photos and printing all work with zero signal.</p></details>
+      <details><summary>Can I use it on my phone AND my tablet?</summary>
+        <p>Yes — your key works on all your own devices. Enter the same email and key on each one.</p></details>
+      <details><summary>Are the prices real quotes?</summary>
+        <p>They're planning estimates built from <b>your</b> base rate, shown as a range and clearly labeled "not a quote." You stay in control of final pricing.</p></details>
+      <details><summary>How do I cancel?</summary>
+        <p>Cancel your subscription anytime — you keep access through the period you've paid for, and you just won't receive the next key.</p></details>
+      <details><summary>Do you offer refunds?</summary>
+        <p>If it's not for you, email us within 14 days of your first payment and we'll refund it, no questions asked.</p></details>
+    </div>
+  </div>
+</section>
+
+<footer>
+  BuildView 3D Pro · questions? <a id="footMail" href="#">email us</a><br>
+  Estimates produced by the app are for planning only and are not quotes.
+</footer>
+
+<script>
+"use strict";
+/* ============================================================
+   SETUP — paste your Stripe Payment Links here.
+   In Stripe: Products → Add product ("BuildView 3D Pro",
+   recurring, $29/month and $290/year) → create a Payment Link
+   for each → paste the two URLs below.
+   Until then, the buttons open an email order instead.
+   ============================================================ */
+var STRIPE_MONTHLY = "";   // e.g. "https://buy.stripe.com/xxxx"
+var STRIPE_ANNUAL  = "";   // e.g. "https://buy.stripe.com/yyyy"
+var CONTACT_EMAIL  = "nmaisano1217@gmail.com";
+
+function mailto(subject, body){
+  return "mailto:"+CONTACT_EMAIL+"?subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(body);
+}
+document.querySelectorAll("[data-plan]").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    var monthly = btn.dataset.plan==="monthly";
+    var url = monthly ? STRIPE_MONTHLY : STRIPE_ANNUAL;
+    if(url){ location.href=url; return; }
+    location.href = mailto(
+      "BuildView 3D Pro — "+(monthly ? "monthly ($29/mo)" : "annual ($290/yr)")+" subscription",
+      "Hi,\n\nI'd like to subscribe to BuildView 3D Pro ("+(monthly?"monthly":"annual")+" plan).\n\nMy email for the license key is: \n\nThanks!"
+    );
+  });
+});
+document.getElementById("trialLink").href = mailto("BuildView 3D — free trial key please",
+  "Hi,\n\nI'd like a free 7-day trial key for BuildView 3D.\n\nMy email for the key is: \n\nThanks!");
+document.getElementById("footMail").href = "mailto:"+CONTACT_EMAIL;
+</script>
+</body>
+</html>

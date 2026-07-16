@@ -135,6 +135,32 @@
   .card .viewbtn:hover{border-color:var(--accent);}
   .disclaimer{font-size:10.5px; color:var(--muted); padding:0 14px 10px; background:var(--panel); line-height:1.5;}
 
+  /* ---------- License lock ---------- */
+  #lockScreen{
+    position:fixed; inset:0; z-index:9999; background:var(--bg);
+    display:flex; align-items:center; justify-content:center; padding:20px; overflow-y:auto;
+  }
+  .lockcard{
+    width:100%; max-width:400px; background:var(--panel); border:1px solid var(--line);
+    border-radius:var(--radius); padding:30px 28px; text-align:center;
+  }
+  .lockcard .locklogo{
+    width:52px;height:52px;border-radius:12px;background:var(--accent);
+    display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;
+  }
+  .lockcard h1{font-size:20px; margin-bottom:4px;}
+  .lockcard h1 span{color:var(--accent2);}
+  .locksub{font-size:13px; color:var(--muted); line-height:1.5; margin-bottom:16px;}
+  .lockcard label{text-align:left;}
+  .lockcard button{
+    width:100%; margin-top:16px; background:var(--accent); color:#1a1206; border:none;
+    font-size:15px; font-weight:700; padding:12px; border-radius:10px; cursor:pointer; font-family:inherit;
+  }
+  .lockcard button:hover{background:var(--accent2);}
+  .lockerr{font-size:12.5px; color:#ff8080; margin-top:10px; min-height:16px; line-height:1.5;}
+  .lockfoot{font-size:12px; color:var(--muted); margin-top:14px; line-height:1.6; border-top:1px solid var(--line); padding-top:14px;}
+  .lockfoot a{color:var(--accent2);}
+
   /* ---------- Print sheet ---------- */
   #printSheet{display:none;}
   @media print{
@@ -166,6 +192,95 @@
 </style>
 </head>
 <body>
+
+<!-- ================= License lock (BuildView 3D Pro) ================= -->
+<div id="lockScreen">
+  <div class="lockcard">
+    <div class="locklogo">🏗️</div>
+    <h1>BuildView 3D <span>Pro</span></h1>
+    <p class="locksub">Enter the email you subscribed with and your license key to unlock the app on this device.</p>
+    <label>Your email</label>
+    <input type="text" id="licEmail" placeholder="you@company.com" autocomplete="email">
+    <label>License key</label>
+    <input type="text" id="licKey" placeholder="BV3-20260801-XXXXXX" autocomplete="off" spellcheck="false">
+    <button id="licUnlock">Unlock</button>
+    <div class="lockerr" id="licErr"></div>
+    <div class="lockfoot">
+      No key yet? <a href="buy.html">Subscribe here</a><br>
+      or <a id="licTrialLink" href="#">email us</a> for a free 7-day trial key.
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+"use strict";
+/* ============================================================
+   LICENSE GATE
+   - SALT below must match the SALT in keygen.html exactly.
+   - Change SALT to your own random string before selling,
+     then keep keygen.html (and this repo) private.
+   ============================================================ */
+var SALT    = "change-me-to-something-random-BV3";
+var CONTACT = "nmaisano1217@gmail.com";
+var STORE   = "bv3_license";
+
+function hash6(s){
+  var h1=5381, h2=52711;
+  for(var i=0;i<s.length;i++){
+    var c=s.charCodeAt(i);
+    h1=((h1<<5)+h1+c)>>>0;
+    h2=((h2<<6)+h2+c*7)>>>0;
+  }
+  var n=(h1%1679616)*1296+(h2%1296); /* 36^6 combinations */
+  n=n.toString(36).toUpperCase();
+  while(n.length<6) n="0"+n;
+  return n;
+}
+function normEmail(e){ return (e||"").trim().toLowerCase(); }
+function checkKey(email, key){
+  var m=(key||"").trim().toUpperCase().match(/^BV3-(\d{8})-([A-Z0-9]{6})$/);
+  if(!m) return {ok:false, why:"That key doesn't look right — it should read BV3-YYYYMMDD-XXXXXX, exactly as it was sent to you."};
+  var expiry=m[1];
+  if(hash6(normEmail(email)+"|"+expiry+"|"+SALT)!==m[2])
+    return {ok:false, why:"Key and email don't match. Use the exact email address your key was issued to."};
+  var end=new Date(+expiry.slice(0,4), +expiry.slice(4,6)-1, +expiry.slice(6,8), 23,59,59);
+  if(new Date()>end)
+    return {ok:false, why:"This key expired on "+end.toLocaleDateString()+". Renew your subscription to get a fresh key."};
+  return {ok:true, until:end};
+}
+function unlock(until){
+  var el=document.getElementById("lockScreen");
+  if(el) el.remove();
+  var sub=document.querySelector("header .sub");
+  if(sub) sub.textContent+=" · licensed thru "+until.toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"});
+}
+
+document.getElementById("licTrialLink").href=
+  "mailto:"+CONTACT+"?subject="+encodeURIComponent("BuildView 3D — free trial key please");
+
+var emailIn=document.getElementById("licEmail"),
+    keyIn=document.getElementById("licKey"),
+    err=document.getElementById("licErr");
+
+document.getElementById("licUnlock").addEventListener("click", function(){
+  var r=checkKey(emailIn.value, keyIn.value);
+  if(!r.ok){ err.textContent=r.why; return; }
+  try{ localStorage.setItem(STORE, JSON.stringify({e:emailIn.value.trim(), k:keyIn.value.trim().toUpperCase()})); }catch(_){}
+  unlock(r.until);
+});
+keyIn.addEventListener("keydown", function(ev){ if(ev.key==="Enter") document.getElementById("licUnlock").click(); });
+
+/* Re-validate a saved license on every load so expiry is enforced */
+try{
+  var saved=JSON.parse(localStorage.getItem(STORE)||"null");
+  if(saved){
+    var r=checkKey(saved.e, saved.k);
+    if(r.ok){ unlock(r.until); }
+    else{ emailIn.value=saved.e||""; err.textContent=r.why; }
+  }
+}catch(_){}
+})();
+</script>
 
 <header>
   <div class="logo">🏗️</div>

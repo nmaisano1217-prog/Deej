@@ -1,6 +1,11 @@
-# BuildView 3D 🏗️
+# BuildView 3D Pro 🏗️
 
 **Show clients what you'll build — before you build it.**
+
+Now packaged as a **monthly subscription product**: the app is locked behind a
+license key, there's a sales page to send prospects to, and a private key
+generator you use to issue keys to paying subscribers. See
+[💰 Selling it](#-selling-it-as-a-subscription) below.
 
 A simple tool for contractors: type in the measurements and a plain-English
 description of what the client wants, and get an interactive 3D preview with
@@ -49,8 +54,96 @@ not a quote.
 
 | File | What it is |
 |---|---|
-| `index.html` | The whole app — UI, 3D builders, pricing |
+| `index.html` | The app — UI, 3D builders, pricing, **license lock** |
 | `three.min.js` | Three.js r128 (bundled locally so the app works offline) |
+| `buy.html` | Sales page — features, pricing, subscribe buttons, FAQ |
+| `team.html` | 🏢 **Deej's AI Team** — four AI employees who run the business with you (see below) |
+| `keygen.html` | 🔒 **NOT in this repo — stored locally only.** Your license key generator lives on your own computer, so it can never end up on a public website. It's gitignored so it won't be committed by accident. |
 
-No build step, no dependencies, no server. Copy both files onto a laptop,
-tablet, or USB stick and it just works.
+No build step, no dependencies, no server.
+
+---
+
+## 💰 Selling it as a subscription
+
+The whole business runs on three pieces:
+
+1. **`buy.html`** — the page prospects see. It pitches the product at
+   **$29/month or $290/year** (edit the numbers right in the file if you want
+   different pricing).
+2. **`index.html`** — the app itself, locked. It asks for an email + license
+   key on first open, remembers it, and **locks itself again the day the key
+   expires**. Works fully offline after that first unlock.
+3. **`keygen.html`** — your tool. When someone pays, open it, type their email,
+   pick the plan, and it spits out their key **plus a ready-to-send welcome
+   email**. Takes 30 seconds per customer.
+
+### One-time setup (do these before your first sale)
+
+1. **Change the secret.** In both `index.html` and your local copy of
+   `keygen.html` find the line
+   `var SALT = "change-me-to-something-random-BV3"` and change it to your own
+   random gibberish — **the same string in both files**. This is what makes
+   your keys forgery-proof-enough. (`keygen.html` isn't in this repo — it's
+   stored only on your own computer, and gitignored so it stays that way.)
+2. **Set up payments.** In [Stripe](https://stripe.com): Products → Add product
+   → "BuildView 3D Pro", recurring, $29/month — then create a **Payment Link**
+   for it. Do the same for a $290/year price. Paste the two links into the
+   marked spot at the bottom of `buy.html` (`STRIPE_MONTHLY` / `STRIPE_ANNUAL`).
+   *Until you do this, the subscribe buttons fall back to sending you an email
+   order instead — so you can start selling today and add Stripe later.*
+3. **Put it online.** Host `index.html`, `three.min.js` and `buy.html` anywhere
+   static — GitHub Pages, Netlify, Vercel (all free). Send prospects the
+   `buy.html` link. The app being public is fine — it's locked. `keygen.html`
+   stays on your computer and never goes online.
+
+### Day-to-day
+
+- **New subscriber** (Stripe emails you on every payment): open `keygen.html`,
+  enter their email, pick Monthly/Annual, copy the welcome email, send it. Done.
+- **Renewal**: when the next payment comes in, generate a fresh key for the
+  same email and send it.
+- **Cancellation**: do nothing. No new key → the app locks itself when the old
+  one runs out.
+- **Trial requests**: generate a 7-day key. No card, no risk — it expires on
+  its own.
+
+### Honest fine print
+
+The lock is a strong deterrent, not bank-vault DRM — this is a client-side app,
+so a determined nerd could pry it open. For selling to contractors at $29/mo,
+that's the right trade-off: zero servers, zero hosting costs, works offline,
+and honest customers stay honest.
+
+---
+
+## 🏢 Deej's AI Team (`team.html`)
+
+Your company staff, powered by AI. Open `team.html` in a browser and you get
+four employees who already know BuildView inside-out — the product, the
+pricing, the customers — and do real work when you ask:
+
+| Employee | Role | What they do |
+|---|---|---|
+| 📣 **Mia** | Marketing Manager | Facebook/Instagram posts, ads, flyers, email blasts — ready to copy-paste |
+| 💼 **Sal** | Sales Rep | Cold outreach, follow-ups, replies to prospects, objection handling |
+| 🛟 **Sam** | Customer Support | Welcome emails, key troubleshooting, renewal reminders, refund replies |
+| 📊 **Bea** | Business Advisor | Pricing decisions, growth plans, "what should I do next?" |
+
+Each one has quick-task buttons (e.g. *"Write this week's Facebook post"*,
+*"Reply: my key isn't working"*) or you can type anything. Paste in a real
+customer email and get a ready-to-send reply back.
+
+### Setup (one time, ~2 minutes)
+
+1. Sign up at [console.anthropic.com](https://console.anthropic.com) (they make
+   Claude, the AI these employees run on)
+2. Add a few dollars of credit under **Billing**
+3. Create an **API key** and paste it into the app when it asks
+
+The key and all conversations are stored only in your browser, on your device.
+A typical task (a post, an email) costs a few cents. Unlike the other files,
+this one needs internet — the AI lives in the cloud.
+
+⚠️ Your API key is money — don't share it, and keep `team.html` for yourself
+(it's your back office, not part of what customers get).

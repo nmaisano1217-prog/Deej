@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deej's AI Team — your BuildView company staff</title>
+<style>
+  :root{
+    --bg:#16181d; --panel:#1f232b; --panel2:#262b35; --line:#343b48;
+    --text:#e8eaee; --muted:#9aa3b2; --accent:#ff7a1a; --accent2:#ffb26b;
+    --good:#3ecf8e; --radius:12px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--text); overflow:hidden;
+  }
+  header{
+    display:flex; align-items:center; gap:12px; padding:10px 18px;
+    background:var(--panel); border-bottom:1px solid var(--line); height:56px;
+  }
+  header .logo{
+    width:34px;height:34px;border-radius:8px;background:var(--accent);
+    display:flex;align-items:center;justify-content:center;font-size:19px;
+  }
+  header h1{font-size:17px;font-weight:700;letter-spacing:.2px;}
+  header .sub{color:var(--muted);font-size:12px;margin-top:1px;}
+  header .spacer{flex:1;}
+  header button{
+    background:var(--panel2); border:1px solid var(--line); color:var(--text);
+    border-radius:8px; padding:8px 12px; font-size:12.5px; cursor:pointer; font-family:inherit;
+  }
+  header button:hover{border-color:var(--accent);}
+
+  .app{display:flex; height:calc(100% - 56px);}
+
+  /* ---------- Staff sidebar ---------- */
+  aside{
+    width:270px; min-width:270px; background:var(--panel); border-right:1px solid var(--line);
+    padding:14px; overflow-y:auto;
+  }
+  aside h2{font-size:12px; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin:4px 0 10px;}
+  .emp{
+    display:flex; gap:10px; align-items:center; width:100%; text-align:left;
+    background:var(--panel2); border:1px solid var(--line); color:var(--text);
+    border-radius:10px; padding:11px 12px; margin-bottom:8px; cursor:pointer; font-family:inherit;
+  }
+  .emp .face{font-size:24px;}
+  .emp .nm{font-size:14px; font-weight:700;}
+  .emp .rl{font-size:11.5px; color:var(--muted); margin-top:1px;}
+  .emp.active{border-color:var(--accent); background:#2e2418;}
+  .emp.active .rl{color:var(--accent2);}
+  .sidefoot{font-size:11px; color:var(--muted); line-height:1.6; margin-top:12px; border-top:1px solid var(--line); padding-top:12px;}
+  .sidefoot a{color:var(--accent2);}
+
+  /* ---------- Office / chat ---------- */
+  main{flex:1; display:flex; flex-direction:column; min-width:0;}
+  .deskhead{
+    padding:12px 20px; border-bottom:1px solid var(--line); background:var(--panel);
+    display:flex; align-items:center; gap:12px;
+  }
+  .deskhead .face{font-size:30px;}
+  .deskhead .nm{font-size:15px; font-weight:700;}
+  .deskhead .rl{font-size:12px; color:var(--muted);}
+  .tasks{display:flex; flex-wrap:wrap; gap:7px; padding:10px 20px 0;}
+  .tasks button{
+    background:var(--panel2); border:1px solid var(--line); color:var(--text);
+    border-radius:99px; padding:6px 13px; font-size:12px; cursor:pointer; font-family:inherit;
+  }
+  .tasks button:hover{border-color:var(--accent); color:var(--accent2);}
+
+  .thread{flex:1; overflow-y:auto; padding:16px 20px; display:flex; flex-direction:column; gap:12px;}
+  .msg{max-width:78%; border-radius:12px; padding:11px 14px; font-size:14px; line-height:1.55; white-space:pre-wrap; word-wrap:break-word;}
+  .msg.user{align-self:flex-end; background:var(--accent); color:#1a1206;}
+  .msg.ai{align-self:flex-start; background:var(--panel2); border:1px solid var(--line);}
+  .msg .who{font-size:11px; font-weight:700; color:var(--accent2); margin-bottom:5px;}
+  .msg.user .who{display:none;}
+  .msg .copy{
+    display:block; margin-top:9px; background:none; border:1px solid var(--line); color:var(--muted);
+    border-radius:7px; padding:3px 10px; font-size:11px; cursor:pointer; font-family:inherit;
+  }
+  .msg .copy:hover{border-color:var(--accent); color:var(--text);}
+  .empty-thread{margin:auto; text-align:center; color:var(--muted); max-width:420px; line-height:1.6; font-size:14px;}
+  .empty-thread .big{font-size:40px; margin-bottom:8px;}
+
+  .composer{display:flex; gap:8px; padding:12px 20px 16px; border-top:1px solid var(--line); background:var(--panel);}
+  .composer textarea{
+    flex:1; background:var(--panel2); border:1px solid var(--line); color:var(--text);
+    border-radius:10px; padding:10px 12px; font-size:14px; font-family:inherit; resize:none; min-height:44px; max-height:140px;
+  }
+  .composer textarea:focus{outline:2px solid var(--accent); outline-offset:-1px; border-color:transparent;}
+  .composer button{
+    background:var(--accent); color:#1a1206; border:none; font-weight:700; font-size:14px;
+    padding:0 22px; border-radius:10px; cursor:pointer; font-family:inherit;
+  }
+  .composer button:hover{background:var(--accent2);}
+  .composer button:disabled{opacity:.55; cursor:default;}
+
+  /* ---------- Key setup overlay ---------- */
+  #keyScreen{
+    position:fixed; inset:0; z-index:9999; background:var(--bg);
+    display:flex; align-items:center; justify-content:center; padding:20px; overflow-y:auto;
+  }
+  .keycard{
+    width:100%; max-width:460px; background:var(--panel); border:1px solid var(--line);
+    border-radius:var(--radius); padding:30px 28px;
+  }
+  .keycard .locklogo{
+    width:52px;height:52px;border-radius:12px;background:var(--accent);
+    display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;
+  }
+  .keycard h1{font-size:20px; text-align:center; margin-bottom:4px;}
+  .keycard h1 span{color:var(--accent2);}
+  .keycard .sub2{font-size:13px; color:var(--muted); line-height:1.6; margin-bottom:16px; text-align:center;}
+  .keycard label{display:block; font-size:12.5px; color:var(--muted); margin:12px 0 4px;}
+  .keycard input{
+    width:100%; background:var(--panel2); border:1px solid var(--line); color:var(--text);
+    border-radius:8px; padding:10px 11px; font-size:14px; font-family:inherit;
+  }
+  .keycard input:focus{outline:2px solid var(--accent); outline-offset:-1px; border-color:transparent;}
+  .keycard button{
+    width:100%; margin-top:16px; background:var(--accent); color:#1a1206; border:none;
+    font-size:15px; font-weight:700; padding:12px; border-radius:10px; cursor:pointer; font-family:inherit;
+  }
+  .keycard button:hover{background:var(--accent2);}
+  .keycard ol{margin:10px 0 0 20px; font-size:12.5px; color:var(--muted); line-height:1.8;}
+  .keycard a{color:var(--accent2);}
+  .keyerr{font-size:12.5px; color:#ff8080; margin-top:10px; min-height:16px;}
+  .costnote{font-size:11.5px; color:var(--muted); line-height:1.6; margin-top:14px; border-top:1px solid var(--line); padding-top:12px;}
+
+  @media (max-width: 820px){
+    body{overflow:auto;}
+    .app{flex-direction:column; height:auto;}
+    aside{width:100%; min-width:0; border-right:none; border-bottom:1px solid var(--line);}
+    .thread{min-height:50vh;}
+    .msg{max-width:95%;}
+    header .sub{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= API key setup ================= -->
+<div id="keyScreen" style="display:none">
+  <div class="keycard">
+    <div class="locklogo">🏢</div>
+    <h1>Deej's <span>AI Team</span></h1>
+    <p class="sub2">Four AI employees who know your BuildView business and do real work —
+    marketing, sales, support and strategy. They run on Claude, so you need one thing first:</p>
+    <ol>
+      <li>Go to <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a> and sign up (free)</li>
+      <li>Add a few dollars of credit under Billing</li>
+      <li>Create an <b>API key</b> and paste it below</li>
+    </ol>
+    <label>Your Anthropic API key</label>
+    <input type="password" id="keyInput" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
+    <button id="keySave">Start working</button>
+    <div class="keyerr" id="keyErr"></div>
+    <div class="costnote">
+      The key is stored only in this browser, on this device. Typical cost: a few cents per task —
+      a written post or email usually costs less than a nickel.
+    </div>
+  </div>
+</div>
+
+<header>
+  <div class="logo">🏢</div>
+  <div>
+    <h1>Deej's AI Team</h1>
+    <div class="sub">Your BuildView company staff — pick an employee, give them a job</div>
+  </div>
+  <div class="spacer"></div>
+  <button id="btnClear" title="Clear this employee's conversation">🗑️ Clear chat</button>
+  <button id="btnKey" title="Change your API key">🔑 API key</button>
+</header>
+
+<div class="app">
+  <aside>
+    <h2>Your staff</h2>
+    <div id="staffList"></div>
+    <div class="sidefoot">
+      Every employee already knows your product, prices and customers.
+      Conversations are saved on this device only.
+    </div>
+  </aside>
+
+  <main>
+    <div class="deskhead">
+      <div class="face" id="deskFace"></div>
+      <div>
+        <div class="nm" id="deskName"></div>
+        <div class="rl" id="deskRole"></div>
+      </div>
+    </div>
+    <div class="tasks" id="taskRow"></div>
+    <div class="thread" id="thread"></div>
+    <div class="composer">
+      <textarea id="input" rows="1" placeholder="Give them a job… (Enter to send, Shift+Enter for a new line)"></textarea>
+      <button id="send">Send</button>
+    </div>
+  </main>
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   CONFIG
+   ============================================================ */
+var MODEL = "claude-opus-4-8";
+var KEY_STORE = "deej_team_api_key";
+var CHAT_STORE = "deej_team_chats";
+
+/* Shared business context every employee knows by heart */
+var BIZ = [
+  "You work for Deej, the owner of BuildView 3D Pro — a subscription app for contractors.",
+  "THE PRODUCT: contractors type in measurements and a plain-English description of a job",
+  "(deck, room addition, garage, fence, kitchen cabinets — 25 job types) and instantly get an",
+  "interactive 3D preview to show the client, with TWO priced options side by side: Standard,",
+  "and an Upgraded version with premium materials — a built-in upsell that helps close bigger",
+  "jobs on the spot, right at the kitchen table. Prices come from the contractor's own rates.",
+  "It works offline on phones, tablets and laptops, saves photos to text to clients, and prints",
+  "a one-page handout with the 3D picture and both prices.",
+  "PRICING: $29/month or $290/year (two months free). Free 7-day trial key on request, no card.",
+  "14-day money-back guarantee. After subscribing, customers get a personal license key by email;",
+  "they unlock the app by entering their email + key. Renewals get a fresh key; if they cancel,",
+  "the key simply expires. TARGET CUSTOMERS: small residential contractors — deck builders,",
+  "remodelers, fence and garage builders, handymen. They are practical, busy, allergic to",
+  "corporate fluff, and buy things that visibly win them jobs.",
+].join(" ");
+
+var STAFF = [
+  {
+    id: "mia", face: "📣", name: "Mia", role: "Marketing Manager",
+    system: BIZ + " You are Mia, the marketing manager. You create ready-to-use marketing: Facebook/Instagram posts, short ads, flyers, email blasts. You write the way contractors talk — plain, confident, a little punchy, zero corporate fluff. Lead with the payoff (close more jobs, win the upgrade), not features. Deliver finished content Deej can copy-paste as-is; when it helps, give two labeled variants. Keep posts short. Only ask a question if you truly can't proceed without the answer.",
+    tasks: ["Write this week's Facebook post", "Write a short Instagram ad", "Write a flyer for a home show booth", "Write an email blast for the annual deal"]
+  },
+  {
+    id: "sal", face: "💼", name: "Sal", role: "Sales Rep",
+    system: BIZ + " You are Sal, the sales rep. You write emails and messages to prospects: cold outreach, follow-ups, replies to questions, and objection handling. Friendly, brief, human — like a fellow tradesperson, not a salesperson. Every message ends with ONE clear, low-pressure next step (usually the free 7-day trial). Never overpromise, never invent features or discounts beyond the real pricing. When Deej pastes in a prospect's message, reply as a ready-to-send email.",
+    tasks: ["Draft a cold email to deck builders", "Follow up with a trial user who went quiet", "Handle: “$29 a month is too expensive”", "Reply to: “does it work on my phone?”"]
+  },
+  {
+    id: "sam", face: "🛟", name: "Sam", role: "Customer Support",
+    system: BIZ + " You are Sam, customer support. You write warm, patient, step-by-step replies to customers. You know the mechanics: unlock = enter the exact email the key was issued to, paste the key, hit Unlock; keys are formatted BV3-YYYYMMDD-XXXXXX; a key works on all the customer's own devices; renewals get a fresh key by email; expired key = app locks until a new key is entered; refunds within 14 days of first payment, no questions asked. If something needs Deej personally (issuing a key, processing a refund), say the customer's issue is being taken care of and flag clearly at the top: [DEEJ: action needed — …]. Reply as a ready-to-send email.",
+    tasks: ["Write a welcome email for a new subscriber", "Reply: “my key isn't working”", "Write a friendly renewal reminder", "Reply to a refund request (keep it classy)"]
+  },
+  {
+    id: "bea", face: "📊", name: "Bea", role: "Business Advisor",
+    system: BIZ + " You are Bea, the business advisor. You help Deej make decisions: pricing, growth, where to spend time, what to build next. Be direct and numbers-first — use the real prices ($29/mo, $290/yr) in any math. Always land on ONE clear recommendation with the reasoning in a few tight paragraphs; never dump a menu of options without picking. Assume Deej is a one-person company with limited time and a small budget.",
+    tasks: ["Give me 3 ways to get my first 10 customers", "Should I raise the price?", "Plan my next 30 days", "What should I build next?"]
+  }
+];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+var current = STAFF[0];
+var chats = {};       /* {empId: [{role, content}]} — API-shaped history */
+var busy = false;
+
+try { chats = JSON.parse(localStorage.getItem(CHAT_STORE) || "{}"); } catch (_) { chats = {}; }
+STAFF.forEach(function (e) { if (!Array.isArray(chats[e.id])) chats[e.id] = []; });
+
+function saveChats() {
+  try { localStorage.setItem(CHAT_STORE, JSON.stringify(chats)); } catch (_) {}
+}
+function apiKey() { return localStorage.getItem(KEY_STORE) || ""; }
+
+/* ============================================================
+   UI
+   ============================================================ */
+var $ = function (id) { return document.getElementById(id); };
+
+function renderStaff() {
+  $("staffList").innerHTML = "";
+  STAFF.forEach(function (e) {
+    var b = document.createElement("button");
+    b.className = "emp" + (e.id === current.id ? " active" : "");
+    b.innerHTML = '<span class="face">' + e.face + '</span><span><span class="nm">' + e.name +
+      '</span><div class="rl">' + e.role + "</div></span>";
+    b.addEventListener("click", function () { current = e; renderStaff(); renderDesk(); });
+    $("staffList").appendChild(b);
+  });
+}
+
+function renderDesk() {
+  $("deskFace").textContent = current.face;
+  $("deskName").textContent = current.name;
+  $("deskRole").textContent = current.role;
+  var row = $("taskRow");
+  row.innerHTML = "";
+  current.tasks.forEach(function (t) {
+    var b = document.createElement("button");
+    b.textContent = t;
+    b.addEventListener("click", function () {
+      $("input").value = t.replace(/[“”]/g, '"');
+      $("input").focus();
+    });
+    row.appendChild(b);
+  });
+  renderThread();
+}
+
+function renderThread() {
+  var th = $("thread");
+  th.innerHTML = "";
+  var msgs = chats[current.id];
+  if (!msgs.length) {
+    th.innerHTML = '<div class="empty-thread"><div class="big">' + current.face + "</div><b>" +
+      current.name + " is ready to work.</b><p>Pick a quick task above, or type your own — " +
+      current.name.split(" ")[0] + " already knows your product, your prices and your customers.</p></div>";
+    return;
+  }
+  msgs.forEach(function (m) { th.appendChild(bubble(m.role, m.content)); });
+  th.scrollTop = th.scrollHeight;
+}
+
+function bubble(role, text) {
+  var d = document.createElement("div");
+  d.className = "msg " + (role === "user" ? "user" : "ai");
+  var who = document.createElement("div");
+  who.className = "who";
+  who.textContent = current.face + " " + current.name;
+  d.appendChild(who);
+  var body = document.createElement("span");
+  body.textContent = text;
+  d.appendChild(body);
+  if (role !== "user") {
+    var c = document.createElement("button");
+    c.className = "copy";
+    c.textContent = "📋 Copy";
+    c.addEventListener("click", function () {
+      navigator.clipboard.writeText(body.textContent).then(function () {
+        c.textContent = "✓ Copied";
+        setTimeout(function () { c.textContent = "📋 Copy"; }, 1200);
+      });
+    });
+    d.appendChild(c);
+  }
+  d._body = body;
+  return d;
+}
+
+/* ============================================================
+   CLAUDE API (streaming, direct from the browser)
+   ============================================================ */
+async function askClaude(emp, history, onText) {
+  var res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": apiKey(),
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true"
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: 8000,
+      stream: true,
+      thinking: { type: "adaptive" },
+      system: [{ type: "text", text: emp.system, cache_control: { type: "ephemeral" } }],
+      messages: history
+    })
+  });
+
+  if (!res.ok) {
+    var msg = "Request failed (" + res.status + ").";
+    try {
+      var err = await res.json();
+      if (err && err.error && err.error.message) msg = err.error.message;
+    } catch (_) {}
+    if (res.status === 401) msg = "That API key doesn't look right — click 🔑 API key to fix it. (" + msg + ")";
+    if (res.status === 429) msg = "Rate limited — wait a moment and try again. (" + msg + ")";
+    throw new Error(msg);
+  }
+
+  var reader = res.body.getReader();
+  var decoder = new TextDecoder();
+  var buf = "", full = "", stopReason = null;
+
+  while (true) {
+    var chunk = await reader.read();
+    if (chunk.done) break;
+    buf += decoder.decode(chunk.value, { stream: true });
+    var lines = buf.split("\n");
+    buf = lines.pop();
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      if (line.indexOf("data: ") !== 0) continue;
+      var ev;
+      try { ev = JSON.parse(line.slice(6)); } catch (_) { continue; }
+      if (ev.type === "content_block_delta" && ev.delta && ev.delta.type === "text_delta") {
+        full += ev.delta.text;
+        onText(full);
+      } else if (ev.type === "message_delta" && ev.delta && ev.delta.stop_reason) {
+        stopReason = ev.delta.stop_reason;
+      } else if (ev.type === "error") {
+        throw new Error(ev.error && ev.error.message ? ev.error.message : "Stream error");
+      }
+    }
+  }
+  if (stopReason === "refusal" && !full) {
+    throw new Error(emp.name + " couldn't help with that request — try rephrasing it.");
+  }
+  return full;
+}
+
+async function send() {
+  if (busy) return;
+  var text = $("input").value.trim();
+  if (!text) return;
+  if (!apiKey()) { showKeyScreen(); return; }
+
+  var emp = current;
+  busy = true;
+  $("send").disabled = true;
+  $("input").value = "";
+
+  chats[emp.id].push({ role: "user", content: text });
+  saveChats();
+  renderThread();
+
+  var th = $("thread");
+  var live = bubble("ai", "…");
+  th.appendChild(live);
+  th.scrollTop = th.scrollHeight;
+
+  try {
+    var reply = await askClaude(emp, chats[emp.id], function (soFar) {
+      if (current.id === emp.id) {
+        live._body.textContent = soFar;
+        th.scrollTop = th.scrollHeight;
+      }
+    });
+    chats[emp.id].push({ role: "assistant", content: reply || "(no reply)" });
+    saveChats();
+    if (current.id === emp.id) renderThread();
+  } catch (e) {
+    chats[emp.id].pop(); /* don't keep the failed turn in history */
+    saveChats();
+    /* keep the error bubble on screen — do NOT re-render here */
+    live._body.textContent = "⚠️ " + e.message;
+    if (current.id === emp.id) {
+      $("input").value = text; /* give them their message back to retry */
+      th.scrollTop = th.scrollHeight;
+    }
+  }
+  busy = false;
+  $("send").disabled = false;
+}
+
+/* ============================================================
+   KEY SCREEN + WIRING
+   ============================================================ */
+function showKeyScreen() { $("keyScreen").style.display = "flex"; $("keyInput").focus(); }
+function hideKeyScreen() { $("keyScreen").style.display = "none"; }
+
+$("keySave").addEventListener("click", function () {
+  var k = $("keyInput").value.trim();
+  if (!k || k.indexOf("sk-ant") !== 0) {
+    $("keyErr").textContent = "That doesn't look like an Anthropic key — it starts with sk-ant-";
+    return;
+  }
+  try { localStorage.setItem(KEY_STORE, k); } catch (_) {}
+  $("keyInput").value = "";
+  $("keyErr").textContent = "";
+  hideKeyScreen();
+});
+$("keyInput").addEventListener("keydown", function (e) { if (e.key === "Enter") $("keySave").click(); });
+
+$("btnKey").addEventListener("click", showKeyScreen);
+$("btnClear").addEventListener("click", function () {
+  chats[current.id] = [];
+  saveChats();
+  renderThread();
+});
+$("send").addEventListener("click", send);
+$("input").addEventListener("keydown", function (e) {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+});
+
+renderStaff();
+renderDesk();
+if (!apiKey()) showKeyScreen();
+</script>
+</body>
+</html>
