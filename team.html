@@ -436,14 +436,19 @@ async function send() {
     });
     chats[emp.id].push({ role: "assistant", content: reply || "(no reply)" });
     saveChats();
+    if (current.id === emp.id) renderThread();
   } catch (e) {
     chats[emp.id].pop(); /* don't keep the failed turn in history */
     saveChats();
+    /* keep the error bubble on screen — do NOT re-render here */
     live._body.textContent = "⚠️ " + e.message;
+    if (current.id === emp.id) {
+      $("input").value = text; /* give them their message back to retry */
+      th.scrollTop = th.scrollHeight;
+    }
   }
   busy = false;
   $("send").disabled = false;
-  if (current.id === emp.id) renderThread();
 }
 
 /* ============================================================
